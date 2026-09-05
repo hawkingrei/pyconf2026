@@ -68,7 +68,7 @@ htmlAttrs:
 </div>
 
 <!--
-一条记忆既有原始内容，也有实体关系，还要支持语义检索。今天讲我们为什么把这些工作收进同一个存储引擎，以及实现和交付时做了哪些取舍。
+一条记忆既有原始内容，也有实体关系，还要支持语义检索。今天讲我们为什么把这些工作收进同一个存储引擎，以及设计和实现时做了哪些取舍。
 -->
 
 ---
@@ -98,7 +98,7 @@ htmlAttrs:
 <div class="bg-s rounded-xl p-6 flex flex-col justify-between">
   <div class="flex items-center gap-4"><span class="ca font-mono text-4xl">03</span><span class="c2 text-base font-semibold">验证</span></div>
   <div>
-    <div class="c1 text-2xl font-semibold leading-snug">怎样验证并交付</div>
+    <div class="c1 text-2xl font-semibold leading-snug">怎样验证正确性与性能</div>
     <div class="c3 text-base leading-relaxed mt-2">模型检查、结果对照与性能实测</div>
   </div>
 </div>
@@ -115,7 +115,7 @@ htmlAttrs:
 </div>
 
 <!--
-先说明选型问题，再看引擎怎样组织查询与数据。第三部分讲验证和交付，第四部分讲灰度进展和后续方向。
+先说明选型问题，再看引擎怎样组织查询与数据。第三部分讲正确性和性能验证，第四部分讲灰度进展和后续方向。
 -->
 
 ---
@@ -577,10 +577,10 @@ class: deck-part-hero
 
 <div class="c4 text-sm tracking-widest uppercase mb-4">第 3 部分</div>
 
-# 如何验证与交付
+# 如何验证正确性与性能
 
 <div class="c3 mt-4 text-lg">
-模型检查、结果对照、交付检查与性能测量
+模型检查、结果对照与性能测量
 </div>
 
 </div>
@@ -634,44 +634,10 @@ class: deck-part-hero
 <!--
 图查询和 SQL 查询都用差分与变形测试。例如 TLP 把谓词为真、为假、为空的结果分开，再检查能否重组原结果。
 存储测试则把操作和恢复后的状态与参考模型对照。只执行一条路径并检查它没有报错，不能替代这些结果约束。
-接下来从引擎内部走到交付：正确代码还要进入正确的构建和发布产物。
+正确性之外，还需要观察查询延迟和资源占用。接下来看实际测量数据。
 
 [Sources]
 - skein/crates/fuzz/README.md
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span class="active">03 验证</span><span class="dot">·</span><span>04</span></div>
-
-# 交付中的两个教训
-
-<div class="incident-card">
-  <div class="incident-card__title">① 可选模块要能从干净环境构建</div>
-  <div class="incident-card__body">
-    一个跟 Skein 完全无关的 Bazel target，在全新 checkout 里连"分析"都通不过——因为 <code>MODULE.bazel</code> 无条件注册了私有的 <code>skein_src</code> 本地仓库，Bazel 在依赖裁剪发生之前就要先解析它。
-  </div>
-</div>
-
-<div class="incident-card">
-  <div class="incident-card__title">② 版本来源要一致</div>
-  <div class="incident-card__body">
-    一次发布被拦下：Skein 源码 pin 只在一个 workflow 里更新了，另一个 workflow 里重复的字面量 pin 没跟着更新。发布正确地被拦下，没有坏产物流出去。修复后，发布前检查会核对工作流中的版本与仓库记录，提前发现不一致。
-  </div>
-</div>
-
-</div>
-
-<!--
-第一个问题发生在依赖解析阶段：可选能力即使未启用，也可能影响无关目标的构建。
-第二个问题来自重复记录版本。检查把不一致挡在发布前，减少靠人工记忆同步多个位置的风险。
-这两条分别要求干净环境验证和统一版本校验。最后再看性能测量能支持哪些结论。
-
-[Sources]
-- postmortem/2026-08-28-nmem-server-bazel-skein-bootstrap.md
-- postmortem/2026-08-19-skein-native-gate-pin-drift.md
 -->
 
 ---

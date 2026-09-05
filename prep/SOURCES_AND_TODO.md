@@ -2,8 +2,8 @@
 
 ## Current deck
 
-The deck contains 24 slides in four parts: storage choices, engine design,
-verification and delivery, and rollout. The main narrative is in Chinese.
+The deck contains 23 slides in four parts: storage choices, engine design,
+correctness and performance verification, and rollout. The main narrative is in Chinese.
 The slide-by-slide review is recorded in [NARRATIVE_REVIEW.md](NARRATIVE_REVIEW.md).
 
 ## Technical sources
@@ -24,7 +24,6 @@ preparation, not files vendored into this presentation repository.
 | AI-facing integration | Presenter update, 2026-09-05 | AI authors queries and invokes the database through MCP; branches support independent exploration. Specific branch write/merge semantics are not asserted. |
 | Formal models | `skein/docs/tla/`, `skein/AGENTS.md` | Model checking concerns the modeled state space, not proof of all implementation behavior. |
 | Differential and metamorphic tests | `skein/crates/fuzz/README.md` | Compare plans, equivalent expressions, and storage states; omit the detailed oracle inventory. |
-| Delivery incidents | `postmortem/2026-08-28-nmem-server-bazel-skein-bootstrap.md`, `postmortem/2026-08-19-skein-native-gate-pin-drift.md` | Dependency admission and version consistency are distinct delivery lessons. |
 | Rollout path | `docs/implementation/SKEIN_EMBEDDED_BOOTSTRAP.md`, `skein/docs/specs/POSTGRES_RELATIONAL_CONTENT_STORE_SPEC.md` | Show validation steps without marking the final authority switch as already completed. |
 
 SQLite comparison references were checked against the official documentation:
@@ -59,7 +58,7 @@ latency or constant whole-database memory.
 ## Presenter-provided status and directions
 
 On 2026-09-05, the presenter reported that Skein is integrated into Nowledge Mem
-and gradual rollout has started. Slide 21 states this update. It is not an
+and gradual rollout has started. Slide 20 states this update. It is not an
 independently inspected deployment result or a claim that full rollout is done.
 
 The presenter described MCP query access and branch support for the AI-native
@@ -70,13 +69,13 @@ branch lifecycle APIs.
 
 The presenter also specified four future directions on 2026-09-05: open
 source, mobile support, more PostgreSQL features, and better resource control
-with feature selection from phones to servers. Slide 23 presents these as
+with feature selection from phones to servers. Slide 22 presents these as
 future work, without adding release dates or claiming completed support.
 
 ## Before the talk
 
 - Confirm the event name, city, and date; the deck currently says PyConf 2026.
-- Rehearse the 24-slide deck against the confirmed 40-minute slot.
+- Rehearse the 23-slide deck against the confirmed 40-minute slot.
 - Refresh operational status with the presenter if the rollout changes.
 - Recheck dated benchmarks before substituting new numbers.
 

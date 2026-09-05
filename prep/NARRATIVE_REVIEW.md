@@ -1,8 +1,8 @@
 # Narrative review
 
 Reviewed every slide and its speaker notes from commit `a75ba3e`.
-The current deck has 24 slides, reduced from 34, in four parts.
-Execution and concurrency now share slide 12; the maturity update is slide 21.
+The current deck has 23 slides, reduced from 34, in four parts.
+Execution and concurrency share slide 12; the maturity update is slide 20.
 
 ## Narrative ownership
 
@@ -13,8 +13,7 @@ repeat the detailed explanations. A single closing slide holds the links.
 1. Storage choices: existing roles, the SQLite tradeoff, coordination costs.
 2. Engine design: responsibilities, deployment, query flow, optimization,
    execution, concurrency, retrieval, and AI interaction through MCP and branches.
-3. Verification and delivery: state models, result comparisons, delivery
-   incidents, and workload-specific measurements.
+3. Verification: state models, result comparisons, and workload-specific measurements.
 4. Rollout: current integration, the validation path, and future directions.
 
 ## Review of every original slide
@@ -38,23 +37,23 @@ repeat the detailed explanations. A single closing slide holds the links.
 | 15 | 8 | Merge the module inventory into the grouped architecture map. |
 | 16 | 13 | Explain keyword versus semantic retrieval, with one authoritative explanation of index rebuildability. |
 | 17 | 14 | Follow the presenter's AI-native framing: AI authors and runs queries through MCP, with branches for independent task exploration. Remove the schema-validation implementation details. |
-| 18 | 15 | Broaden the section title to cover verification and delivery, including performance measurement. |
+| 18 | 15 | Group model checking, result comparisons, and performance measurement under verification. |
 | 19 | 16 | Replace model counts and the unrelated cross-store statistic with commit, snapshot, and reclamation scenarios. |
 | 20 | 17 | Present plan, expression, and state comparisons; remove the oracle inventory and repeated gap discussion. |
-| 21 | 20 | Use the status divider to preview topics, leaving the integration milestone to the next page. |
-| 22 | 21 | Preserve the presenter's concise integration and gradual-rollout statement. |
-| 23 | 19 | Move measurement evidence into verification; label latency and memory separately and correct the constant-latency implication. |
-| 24 | 22 | Explain the gradual switch in data authority; remove implementation controls and the misleading completed-final-stage highlight. |
-| 25 | 22 | Merge the general validation principle into rollout; omit the internal domain and exit-code inventory. |
-| 26 | 18 | Move the two delivery lessons into verification and give each a distinct takeaway. |
-| 27 | 23 | Replace the former exploration ideas with the presenter's four directions: open source, mobile support, more PostgreSQL features, and resource control with feature selection from phones to servers. |
+| 21 | 19 | Use the status divider to preview topics, leaving the integration milestone to the next page. |
+| 22 | 20 | Preserve the presenter's concise integration and gradual-rollout statement. |
+| 23 | 18 | Move measurement evidence into verification; label latency and memory separately and correct the constant-latency implication. |
+| 24 | 21 | Explain the gradual switch in data authority; remove implementation controls and the misleading completed-final-stage highlight. |
+| 25 | 21 | Merge the general validation principle into rollout; omit the internal domain and exit-code inventory. |
+| 26 | Removed | Remove the delivery-incident page and its transitions at the presenter's request. |
+| 27 | 22 | Replace the former exploration ideas with the presenter's four directions: open source, mobile support, more PostgreSQL features, and resource control with feature selection from phones to servers. |
 | 28 | Removed | Remove the audience-specific section divider at the presenter's request. |
 | 29 | Removed | Remove the language-binding disclaimer page. |
 | 30 | Removed | Remove the language-migration story at the presenter's request. |
 | 31 | Removed | Remove the language-ecosystem comparison at the presenter's request. |
 | 32 | Removed | Remove the first repeated closing summary. |
 | 33 | Removed | Remove the second repeated closing summary, unsupported absolute comparisons, and duplicate links. |
-| 34 | 24 | Keep one thank-you and links page; stop repeating the rollout milestone. |
+| 34 | 23 | Keep one thank-you and links page; stop repeating the rollout milestone. |
 
 ## Consistency corrections
 
@@ -74,7 +73,7 @@ repeat the detailed explanations. A single closing slide holds the links.
 ## Earlier verification
 
 The checks below describe the earlier 25-slide review. The current layout
-changes and page merge are left to the presenter for online review, without
+changes, page merge, and deletion are left to the presenter for online review, without
 local builds or previews, as requested.
 
 - `pnpm build` completed successfully with the existing lock and configuration.
