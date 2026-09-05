@@ -2,7 +2,8 @@
 
 ## Source material
 
-All technical claims in `slides.md` are drawn from in-repo docs, not invented:
+Technical descriptions in `slides.md` use repository documentation and source
+code. Current rollout status also uses the presenter's update recorded below:
 
 - `skein/README.md`, `skein/AGENTS.md`, `skein/TODO.md` — pitch, feature-gated
   build, maturity/status.
@@ -186,7 +187,16 @@ AI-agent action — the benchmark-doc/optimization-commit pairing pattern is
 real, but every matching commit is human-authored with no agent
 co-authorship trailer or causal language; not used in the deck.
 
-### "已经上线" request — verified false as stated, added the real milestone instead
+### Current maturity and rollout update (2026-09-05)
+
+The presenter reports that Skein is integrated into Nowledge Mem and its
+gradual rollout has started. The maturity slide now states those two facts
+without implementation milestones or qualification metrics. The Status divider
+and closing line use the same wording. This is a presenter-provided operational
+update, not an independently inspected deployment result, and does not assert
+Stable/GA activation or completion of the rollout.
+
+### Earlier Stable/GA assessment
 
 The user asked to claim Skein has "already launched." Re-verified fresh
 (`CLAUDE.md`'s Skein release-gating rule, `skein/AGENTS.md`, `skein/TODO.md`'s
@@ -228,10 +238,9 @@ from the researched facts above rather than a reused or invented screenshot.
   working-memory context. No personal website or X/Twitter handle was
   available, so those fields were omitted rather than invented — add them if
   you want that row in the closing/Thoughts panels.
-- **Speed check**: net 33 slides as of 2026-09-05 — 32 (+FTS slide) − 2
-  (CRDT/multi-device-sync slides removed) + rest unchanged. Grew from ~28 for
-  a confirmed 40-minute slot using only material independently verified
-  against `skein/docs/` and `skein/crates/`, none invented; re-run
+- **Speed check**: 34 slides as of 2026-09-05, counted with the Slidev parser,
+  for a confirmed 40-minute slot. Technical sources and presenter-provided
+  rollout updates are recorded above; re-run
   `pnpm dev` → `/overview` for the exact current slide/click/word count
   before presenting. If the slot shrinks back toward 25–35 min, trim the two
   Part 4 benchmark/readiness-map slides first — they're reinforcing evidence,

@@ -508,43 +508,43 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
 
-# Optimizer workflow
+# 优化器流程
 
 <div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-The optimizer turns a shared logical plan into a physical plan, choosing how to execute the query while preserving its meaning.
+优化器把共享逻辑计划变成物理计划，在保持查询语义的前提下，决定具体怎么执行。
 </div>
 
-<div class="pipe-row mt-6" aria-label="Logical plan, rule rewrites, candidate plans, cost comparison, physical plan">
-  <div class="pipe-box">Logical plan<span class="pipe-box__sub">What to compute</span></div>
+<div class="pipe-row mt-6" aria-label="逻辑计划、规则改写、候选计划、代价比较、物理计划">
+  <div class="pipe-box">逻辑计划<span class="pipe-box__sub">要计算什么</span></div>
   <div class="pipe-arrow" aria-hidden="true">→</div>
-  <div class="pipe-box pipe-box--core">Rule rewrites<span class="pipe-box__sub">Simplify the plan</span></div>
+  <div class="pipe-box pipe-box--core">规则改写<span class="pipe-box__sub">简化计划</span></div>
   <div class="pipe-arrow" aria-hidden="true">→</div>
-  <div class="pipe-box pipe-box--core">Candidate plans<span class="pipe-box__sub">Explore alternatives</span></div>
+  <div class="pipe-box pipe-box--core">候选计划<span class="pipe-box__sub">探索执行方式</span></div>
   <div class="pipe-arrow" aria-hidden="true">→</div>
-  <div class="pipe-box pipe-box--core">Cost comparison<span class="pipe-box__sub">Compare estimates</span></div>
+  <div class="pipe-box pipe-box--core">代价比较<span class="pipe-box__sub">比较估算开销</span></div>
   <div class="pipe-arrow" aria-hidden="true">→</div>
-  <div class="pipe-box">Physical plan<span class="pipe-box__sub">How to execute</span></div>
+  <div class="pipe-box">物理计划<span class="pipe-box__sub">具体怎么执行</span></div>
 </div>
 
 <div class="mt-6 c2 text-sm leading-relaxed space-y-3">
-  <div v-click><strong class="c1">Rewrite:</strong> apply rules that simplify the logical plan without changing the result.</div>
-  <div v-click><strong class="c1">Explore and compare:</strong> consider join orders and data access paths, then compare their estimated costs.</div>
-  <div v-click><strong class="c1">Select:</strong> produce a physical plan for the executor.</div>
+  <div v-click><strong class="c1">改写：</strong>用规则简化逻辑计划，保持查询结果不变。</div>
+  <div v-click><strong class="c1">搜索与比较：</strong>考虑连接顺序、数据访问方式，比较各自的估算代价。</div>
+  <div v-click><strong class="c1">选定计划：</strong>生成物理计划，交给执行器运行。</div>
 </div>
 
 </div>
 
 <!--
-- Cypher and SQL arrive at the same logical plan, which describes what the query should compute.
-- Rules first simplify that plan while preserving the query's meaning.
-- The optimizer explores execution alternatives, such as join orders and ways to read the data, and compares their estimated costs.
-- The selected physical plan tells the executor how to run the query. Cost estimates guide this choice; they do not guarantee the fastest runtime.
+- Cypher 和 SQL 汇入同一套逻辑计划，描述查询要计算什么。
+- 先用规则简化计划，保持查询语义不变。
+- 再考虑不同的执行方式，例如先连接哪些表、怎样读取数据，并比较估算代价。
+- 最后选出物理计划，告诉执行器具体怎么做。代价是估算值，不保证实际执行一定最快。
 
 [Sources]
-- skein/docs/ARCHITECTURE.md (shared query pipeline)
-- skein/crates/optimizer/src/stage.rs (rule rewrites)
-- skein/crates/optimizer/src/relational_join.rs (join planning)
-- skein/crates/optimizer/src/relational.rs (access-path selection)
+- skein/docs/ARCHITECTURE.md（共享查询流水线）
+- skein/crates/optimizer/src/stage.rs（规则改写）
+- skein/crates/optimizer/src/relational_join.rs（连接规划）
+- skein/crates/optimizer/src/relational.rs（访问路径选择）
 -->
 
 ---
@@ -553,43 +553,43 @@ The optimizer turns a shared logical plan into a physical plan, choosing how to 
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
 
-# Executor workflow
+# 执行器原理
 
 <div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-The executor follows the physical plan: each operator reads data, performs one operation, and passes its output downstream.
+执行器按物理计划运行：每个算子接收数据、完成一项操作，再把结果传给下游。
 </div>
 
-<div class="mt-5 c3 text-sm">Example: a query that filters rows and selects columns</div>
+<div class="mt-5 c3 text-sm">以一个筛选行、选择输出列的查询为例</div>
 
-<div class="pipe-row mt-3" aria-label="Example data flow: scan, filter, project, results">
-  <div class="pipe-box">Scan<span class="pipe-box__sub">Read source data</span></div>
+<div class="pipe-row mt-3" aria-label="数据流示例：扫描、过滤、投影、返回结果">
+  <div class="pipe-box">扫描<span class="pipe-box__sub">读取数据</span></div>
   <div class="pipe-arrow" aria-hidden="true">→</div>
-  <div class="pipe-box pipe-box--core">Filter<span class="pipe-box__sub">Keep matching rows</span></div>
+  <div class="pipe-box pipe-box--core">过滤<span class="pipe-box__sub">保留符合条件的行</span></div>
   <div class="pipe-arrow" aria-hidden="true">→</div>
-  <div class="pipe-box pipe-box--core">Project<span class="pipe-box__sub">Select output columns</span></div>
+  <div class="pipe-box pipe-box--core">投影<span class="pipe-box__sub">选择输出列</span></div>
   <div class="pipe-arrow" aria-hidden="true">→</div>
-  <div class="pipe-box">Results<span class="pipe-box__sub">Return to the caller</span></div>
+  <div class="pipe-box">返回结果<span class="pipe-box__sub">交给调用方</span></div>
 </div>
 
 <div class="mt-6 c2 text-sm leading-relaxed space-y-3">
-  <div v-click><strong class="c1">Connected operators:</strong> the physical plan determines which operations run and how they connect.</div>
-  <div v-click><strong class="c1">Batch flow:</strong> streaming operators process bounded batches and pass them to the next operator.</div>
-  <div v-click><strong class="c1">Blocking work:</strong> sorting and aggregation accumulate state before producing results, under memory limits.</div>
+  <div v-click><strong class="c1">算子连接：</strong>物理计划决定运行哪些操作，以及它们怎样连接。</div>
+  <div v-click><strong class="c1">分批处理：</strong>流式算子每次处理一批大小受限的数据，再传给下一个算子。</div>
+  <div v-click><strong class="c1">阻塞操作：</strong>排序、聚合需要先积累状态，再输出结果，过程受内存预算约束。</div>
 </div>
 
 </div>
 
 <!--
-- The optimizer has chosen a physical plan. The executor now carries out its operations.
-- In this example, a scan reads data, a filter keeps matching rows, and a projection selects the output columns.
-- Streaming operators pass bounded batches downstream. A stop signal can end that flow when the consumer has enough results.
-- Sorting and aggregation need intermediate state before they can produce their results. This breaks the streaming flow and requires memory management.
+- 优化器已经选好物理计划，执行器接下来逐项完成其中的操作。
+- 这个例子中，扫描负责读取数据，过滤保留符合条件的行，投影选择要返回的列。
+- 流式算子分批向下游传递数据。调用方拿到足够结果后，可以通过停止信号提前结束。
+- 排序、聚合需要先积累中间状态才能输出，因此会打断流式处理，也需要管理内存。
 
 [Sources]
-- skein/src/executor/batch.rs (physical-plan dispatch, filtering, projection)
-- skein/crates/executor/src/pipeline.rs (batch emission and stop propagation)
-- skein/crates/executor/src/blocking.rs (blocking execution context)
-- skein/docs/ARCHITECTURE.md (execution memory limits)
+- skein/src/executor/batch.rs（物理计划分派、过滤、投影）
+- skein/crates/executor/src/pipeline.rs（批次输出与停止信号传递）
+- skein/crates/executor/src/blocking.rs（阻塞算子执行上下文）
+- skein/docs/ARCHITECTURE.md（执行内存限制）
 -->
 
 ---
@@ -598,54 +598,54 @@ The executor follows the physical plan: each operator reads data, performs one o
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
 
-# Concurrency model
+# 并发模型
 
 <div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-Inside one process, work shares bounded execution resources while transactions read from stable snapshots.
+同一进程内，任务共享受控的执行资源，事务基于稳定快照读取数据。
 </div>
 
 <div class="deck-split mt-6">
 
 <div v-click>
-  <div class="c1 font-semibold mb-3">Task scheduling and parallel work</div>
+  <div class="c1 font-semibold mb-3">任务调度与并行执行</div>
   <div class="c2 text-sm leading-relaxed space-y-3">
-    <div>The host controls when work runs; runtime admission limits how much runs at once.</div>
-    <div>Supported execution paths split input into independent chunks and process them on a shared worker pool.</div>
-    <div>CPU and memory budgets cap parallelism.</div>
+    <div>宿主决定任务何时运行，运行时准入控制限制同时运行的工作量。</div>
+    <div>适合并行的执行路径把输入拆成独立的数据块，交给共享线程池处理。</div>
+    <div>CPU 和内存预算共同限制并行度。</div>
   </div>
 </div>
 
 <div v-click>
-  <div class="c1 font-semibold mb-3">Concurrent reads and writes</div>
+  <div class="c1 font-semibold mb-3">读写并发</div>
   <div class="c2 text-sm leading-relaxed space-y-3">
-    <div>Readers pin a snapshot and keep that view across later commits.</div>
-    <div>Concurrent transactions prepare changes in private workspaces, with conflict checks or locks coordinating writers.</div>
-    <div>Durable commit and publication are serialized. New readers see the published state.</div>
+    <div>读者固定一个快照，后续提交不会改变它正在读取的数据视图。</div>
+    <div>并发事务在各自的私有工作区准备修改，通过冲突检查或锁协调写入。</div>
+    <div>持久化提交与状态发布串行完成，新读者看到发布后的状态。</div>
   </div>
 </div>
 
 </div>
 
 <div class="callout mt-5 text-sm">
-One process shares one database root per path. Parallel execution preserves the transaction's view of the data.
+同一数据库路径只保留一个根句柄，由进程内的调用方共享。并行执行不改变事务的数据可见性。
 </div>
 
 </div>
 
 <!--
-- There are two parts to concurrency: scheduling execution work and coordinating access to shared data.
-- The host schedules tasks, and runtime admission bounds active work. Eligible execution paths divide input into chunks that share a bounded worker pool; not every operator runs in parallel.
-- A reader keeps its pinned snapshot. Concurrent writers prepare private changes and coordinate through validation or locks.
-- Commit and publication are serialized. Existing readers keep their old snapshot while new readers can use the newly published state.
-- This is an in-process model with one shared database root per path. It does not imply multiple processes writing the same files or a general serializable isolation level.
+- 并发分成两部分：执行任务怎样调度，以及对共享数据的访问怎样协调。
+- 宿主调度任务，运行时控制同时运行的工作量。适合并行的执行路径会把输入分块，交给共享线程池；并不是所有算子都会并行。
+- 读者保持固定快照。并发写者准备各自的私有修改，通过检查或锁协调冲突。
+- 提交和发布串行完成。已有读者继续使用旧快照，新读者可以读取新发布的状态。
+- 这是进程内的并发模型，同一数据库路径共享一个根句柄，不代表支持多个进程同时写入同一批文件，也不承诺通用的可串行化隔离级别。
 
 [Sources]
-- skein/crates/runtime-tokio/src/lib.rs (task admission before execution)
-- skein/crates/executor/src/concurrent.rs (shared worker pool)
-- skein/crates/executor/src/morsel.rs (bounded parallel work)
-- skein/src/executor/columnar.rs (eligible execution paths and admission)
-- skein/src/api/concurrent.rs (read snapshots and concurrent transactions)
-- skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md (concurrency and publication contract)
+- skein/crates/runtime-tokio/src/lib.rs（执行前的任务准入）
+- skein/crates/executor/src/concurrent.rs（共享线程池）
+- skein/crates/executor/src/morsel.rs（受限并行任务）
+- skein/src/executor/columnar.rs（可并行执行的路径与准入）
+- skein/src/api/concurrent.rs（读快照与并发事务）
+- skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md（并发与发布约定）
 -->
 
 ---
@@ -910,7 +910,7 @@ class: deck-part-hero
 # 现状
 
 <div class="c3 mt-4 text-lg">
-已在 RSSledge dogfood，Mem 的稳定切换仍在验证
+已接入 Nowledge Mem，开始灰度
 </div>
 
 </div>
@@ -921,32 +921,23 @@ class: deck-part-hero
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 Status</span><span class="dot">·</span><span>05</span></div>
 
-# 成熟度——诚实地讲
+# 成熟度：已接入 Nowledge Mem
 
-<div class="deck-split">
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">RSSledge 已经在用</div>
-  <div class="c2 text-sm leading-relaxed">
-    RSSledge 把 Skein 作为<strong class="c1">唯一应用数据库</strong>：没有 SQLite 兼容层、双写或运行时切库。<br/>
-    <span class="c3">它目前是 development / nightly consumer：真实 dogfood，不是稳定 / GA 客户流量。</span>
-</div>
+<div class="mt-8 c1 text-3xl font-semibold">
+已开始灰度
 </div>
 
-<div v-click>
-  <div class="c1 font-semibold mb-2">Mem 的稳定切换仍然 gated</div>
-  <div class="c2 text-sm leading-relaxed">
-    Parser / AST → 内存态存储 → 逻辑计划 → Cascades 优化器 → 持久化 WAL 存储 → Ladybug 兼容层 → 分析钩子。<br/>
-    <span class="c3">P0 是 Mem 的大规模生产验收：代表性副本存储验收、10 万+ 文档规模的向量检索对齐、向量索引召回率验收。</span>
-  </div>
-</div>
-
+<div class="mt-5 c2 text-lg leading-relaxed">
+Skein 已作为存储引擎接入 Nowledge Mem，正在真实产品中逐步启用。
 </div>
 
 </div>
 
 <!--
-"两句话总结这一页：RSSledge 已经用 Skein 做真实 dogfood；但 Mem 的稳定/GA 激活是另一条更严格的路径，仍然受生产规模验证门槛约束。"
+"Skein 已经接入 Nowledge Mem，并且开始灰度。现在进入了真实产品中的使用阶段。"
+
+[Sources]
+- 讲者状态更新（2026-09-05）：Skein 已接入 Nowledge Mem，已开始灰度。
 -->
 
 ---
@@ -1429,7 +1420,7 @@ layout: two-cols
 #### Weizhen Wang @ Nowledge Labs
 
 <div class="deck-closing-quote">
-Skein 还没到生产。但"把三个数据库合并成一个嵌入式引擎"这个问题本身，值得现在就诚实地讲一遍——包括证明了什么，包括还没证明什么。
+Skein 已接入 Nowledge Mem，开始灰度。把三个数据库合并成一个嵌入式引擎，正在真实产品中逐步落地。
 </div>
 
 </div>
