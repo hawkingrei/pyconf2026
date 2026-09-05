@@ -73,36 +73,45 @@ htmlAttrs:
 
 ---
 
+<div class="flex h-full min-h-0 flex-col">
+
 # 分享路线
 
-<div class="mt-6 grid grid-cols-4 gap-5">
+<div class="mt-6 grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-5">
 
-<div>
-  <div class="c4 text-xs font-mono mb-2">01</div>
-  <div class="c1 text-sm font-semibold mb-2">选型</div>
-  <div class="c3 text-xs leading-relaxed">三个数据库，一份记忆，谁来保证一致</div>
+<div class="bg-s rounded-xl p-6 flex flex-col justify-between">
+  <div class="flex items-center gap-4"><span class="ca font-mono text-4xl">01</span><span class="c2 text-base font-semibold">选型</span></div>
+  <div>
+    <div class="c1 text-2xl font-semibold leading-snug">为什么重做存储引擎</div>
+    <div class="c3 text-base leading-relaxed mt-2">从三个数据库的协调成本说起</div>
+  </div>
 </div>
 
-<div>
-  <div class="c4 text-xs font-mono mb-2">02</div>
-  <div class="c1 text-sm font-semibold mb-2">引擎</div>
-  <div class="c3 text-xs leading-relaxed">Skein 是什么：嵌入式、统一引擎、面向 AI 的查询</div>
+<div class="bg-s rounded-xl p-6 flex flex-col justify-between">
+  <div class="flex items-center gap-4"><span class="ca font-mono text-4xl">02</span><span class="c2 text-base font-semibold">设计</span></div>
+  <div>
+    <div class="c1 text-2xl font-semibold leading-snug">Skein 如何工作</div>
+    <div class="c3 text-base leading-relaxed mt-2">统一查询、优化执行、并发与 AI 接入</div>
+  </div>
 </div>
 
-<div>
-  <div class="c4 text-xs font-mono mb-2">03</div>
-  <div class="c1 text-sm font-semibold mb-2">验证</div>
-  <div class="c3 text-xs leading-relaxed">模型检查、结果对照、交付检查与性能测量</div>
+<div class="bg-s rounded-xl p-6 flex flex-col justify-between">
+  <div class="flex items-center gap-4"><span class="ca font-mono text-4xl">03</span><span class="c2 text-base font-semibold">验证</span></div>
+  <div>
+    <div class="c1 text-2xl font-semibold leading-snug">怎样验证并交付</div>
+    <div class="c3 text-base leading-relaxed mt-2">模型检查、结果对照与性能实测</div>
+  </div>
 </div>
 
-<div>
-  <div class="c4 text-xs font-mono mb-2">04</div>
-  <div class="c1 text-sm font-semibold mb-2">灰度</div>
-  <div class="c3 text-xs leading-relaxed">产品集成、灰度路径与后续方向</div>
+<div class="bg-s rounded-xl p-6 flex flex-col justify-between">
+  <div class="flex items-center gap-4"><span class="ca font-mono text-4xl">04</span><span class="c2 text-base font-semibold">灰度</span></div>
+  <div>
+    <div class="c1 text-2xl font-semibold leading-snug">走进 Nowledge Mem</div>
+    <div class="c3 text-base leading-relaxed mt-2">灰度进展、迁移路径与未来方向</div>
+  </div>
 </div>
 
-
-
+</div>
 </div>
 
 <!--
@@ -116,7 +125,7 @@ class: deck-part-hero
 
 <div class="text-center deck-section-hero">
 
-<div class="progress-bar mb-8 justify-center"><span class="active">01 选型</span><span class="dot">·</span><span>02 引擎</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
+<div class="progress-bar mb-8 justify-center"><span class="active">01 选型</span><span class="dot">·</span><span>02 设计</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
 
 <div class="c4 text-sm tracking-widest uppercase mb-4">第 1 部分</div>
 
@@ -260,7 +269,7 @@ class: deck-part-hero
 
 <div class="text-center deck-section-hero">
 
-<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
+<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
 
 <div class="c4 text-sm tracking-widest uppercase mb-4">第 2 部分</div>
 
@@ -276,7 +285,7 @@ class: deck-part-hero
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 一个引擎，三类职责
 
@@ -303,7 +312,7 @@ class: deck-part-hero
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 嵌入式优先，也可由宿主服务化
 
@@ -328,7 +337,7 @@ class: deck-part-hero
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 一个引擎，两种查询语言
 
@@ -385,7 +394,7 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 优化器流程
 
@@ -425,7 +434,7 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 执行器原理
 
@@ -469,7 +478,7 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 并发模型
 
@@ -521,7 +530,7 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 检索：关键词与语义相似
 
@@ -547,7 +556,7 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # AI 原生数据库
 
@@ -592,7 +601,7 @@ class: deck-part-hero
 
 <div class="text-center deck-section-hero">
 
-<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span>02 引擎</span><span class="dot">·</span><span class="active">03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
+<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span>02 设计</span><span class="dot">·</span><span class="active">03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
 
 <div class="c4 text-sm tracking-widest uppercase mb-4">第 3 部分</div>
 
@@ -729,7 +738,7 @@ class: deck-part-hero
 
 <div class="text-center deck-section-hero">
 
-<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span>02 引擎</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span class="active">04 灰度</span></div>
+<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span>02 设计</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span class="active">04 灰度</span></div>
 
 <div class="c4 text-sm tracking-widest uppercase mb-4">第 4 部分</div>
 
