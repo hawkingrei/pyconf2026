@@ -1,0 +1,17 @@
+{
+  "name": "nowledge-mem-pyconf-2026-skein",
+  "private": true,
+  "scripts": {
+    "dev": "slidev --open",
+    "build": "slidev build",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@slidev/cli": "^52.14.1",
+    "@slidev/theme-default": "latest"
+  },
+  "devDependencies": {
+    "@iconify-json/ph": "latest",
+    "@iconify-json/simple-icons": "latest"
+  }
+}
