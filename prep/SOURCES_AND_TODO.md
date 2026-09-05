@@ -106,6 +106,20 @@ Verified against `skein/src/executor/batch.rs`,
 section of `skein/docs/ARCHITECTURE.md`. The slide describes data flow without
 claiming that every operator streams or uses a columnar execution path.
 
+### Concurrency model slide added (2026-09-05)
+
+The concurrency overview follows the executor slide. It covers host scheduling,
+bounded runtime admission, and shared workers for eligible parallel execution
+paths. The transaction overview covers pinned read snapshots, private write
+workspaces, conflict coordination, and serialized durable commit/publication.
+
+Sources: `skein/crates/runtime-tokio/src/lib.rs`,
+`skein/crates/executor/src/{concurrent,morsel}.rs`,
+`skein/src/executor/columnar.rs`, `skein/src/api/concurrent.rs`, and
+`skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md`. Keep the one-process/shared-root
+scope and avoid implying that all operators parallelize, all writers succeed,
+or the engine provides general serializable isolation.
+
 ### CRDT / multi-device sync slides removed (2026-09-05)
 
 The user pushed to reframe the CRDT replication slide from "design-stage" to

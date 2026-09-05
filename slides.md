@@ -598,6 +598,62 @@ The executor follows the physical plan: each operator reads data, performs one o
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
 
+# Concurrency model
+
+<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
+Inside one process, work shares bounded execution resources while transactions read from stable snapshots.
+</div>
+
+<div class="deck-split mt-6">
+
+<div v-click>
+  <div class="c1 font-semibold mb-3">Task scheduling and parallel work</div>
+  <div class="c2 text-sm leading-relaxed space-y-3">
+    <div>The host controls when work runs; runtime admission limits how much runs at once.</div>
+    <div>Supported execution paths split input into independent chunks and process them on a shared worker pool.</div>
+    <div>CPU and memory budgets cap parallelism.</div>
+  </div>
+</div>
+
+<div v-click>
+  <div class="c1 font-semibold mb-3">Concurrent reads and writes</div>
+  <div class="c2 text-sm leading-relaxed space-y-3">
+    <div>Readers pin a snapshot and keep that view across later commits.</div>
+    <div>Concurrent transactions prepare changes in private workspaces, with conflict checks or locks coordinating writers.</div>
+    <div>Durable commit and publication are serialized. New readers see the published state.</div>
+  </div>
+</div>
+
+</div>
+
+<div class="callout mt-5 text-sm">
+One process shares one database root per path. Parallel execution preserves the transaction's view of the data.
+</div>
+
+</div>
+
+<!--
+- There are two parts to concurrency: scheduling execution work and coordinating access to shared data.
+- The host schedules tasks, and runtime admission bounds active work. Eligible execution paths divide input into chunks that share a bounded worker pool; not every operator runs in parallel.
+- A reader keeps its pinned snapshot. Concurrent writers prepare private changes and coordinate through validation or locks.
+- Commit and publication are serialized. Existing readers keep their old snapshot while new readers can use the newly published state.
+- This is an in-process model with one shared database root per path. It does not imply multiple processes writing the same files or a general serializable isolation level.
+
+[Sources]
+- skein/crates/runtime-tokio/src/lib.rs (task admission before execution)
+- skein/crates/executor/src/concurrent.rs (shared worker pool)
+- skein/crates/executor/src/morsel.rs (bounded parallel work)
+- skein/src/executor/columnar.rs (eligible execution paths and admission)
+- skein/src/api/concurrent.rs (read snapshots and concurrent transactions)
+- skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md (concurrency and publication contract)
+-->
+
+---
+
+<div class="deck-slide-body">
+
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+
 # 架构地图
 
 <div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
