@@ -713,7 +713,6 @@ class: deck-part-hero
 
 # 本地测量：延迟与内存分别看
 
-<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">以下是具体工作负载的本地对比，不是端到端产品提速或生产指标。</div>
 <div class="stat-row mt-6">
   <div class="stat"><div class="stat__num">28.37×</div><div class="stat__label">单调追加快路径的 P50 比值<br/>每批 32 行，候选路径与关闭路径对比</div></div>
   <div class="stat"><div class="stat__num">3.10×</div><div class="stat__label">高出度一跳查询的 P50 比值<br/>844µs → 272µs，LIMIT 50</div></div>
