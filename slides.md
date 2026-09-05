@@ -436,15 +436,13 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
-# 执行器原理
+# 执行与并发
 
 <div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-执行器按物理计划运行：每个算子接收数据、完成一项操作，再把结果传给下游。
+执行器按物理计划组织数据流。以一个筛选行、选择输出列的查询为例：
 </div>
 
-<div class="mt-5 c3 text-sm">以一个筛选行、选择输出列的查询为例</div>
-
-<div class="pipe-row mt-3" aria-label="数据流示例：扫描、过滤、投影、返回结果">
+<div class="pipe-row mt-5" aria-label="数据流示例：扫描、过滤、投影、返回结果">
   <div class="pipe-box">扫描<span class="pipe-box__sub">读取数据</span></div>
   <div class="pipe-arrow" aria-hidden="true">→</div>
   <div class="pipe-box pipe-box--core">过滤<span class="pipe-box__sub">保留符合条件的行</span></div>
@@ -454,55 +452,25 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
   <div class="pipe-box">返回结果<span class="pipe-box__sub">交给调用方</span></div>
 </div>
 
-<div class="mt-6 c2 text-sm leading-relaxed space-y-3">
-  <div v-click><strong class="c1">分批处理：</strong>流式算子每次处理一批大小受限的数据，再传给下一个算子。</div>
-  <div v-click><strong class="c1">阻塞操作：</strong>排序、聚合需要先积累状态，再输出结果，过程受内存预算约束。</div>
-</div>
-
-</div>
-
-<!--
-- 优化器已经选好物理计划，执行器接下来逐项完成其中的操作。
-- 这个例子中，扫描负责读取数据，过滤保留符合条件的行，投影选择要返回的列。
-- 流式算子分批向下游传递数据。调用方拿到足够结果后，可以通过停止信号提前结束。
-- 排序、聚合需要先积累中间状态才能输出，因此会打断流式处理，也需要管理内存。
-
-[Sources]
-- skein/src/executor/batch.rs（物理计划分派、过滤、投影）
-- skein/crates/executor/src/pipeline.rs（批次输出与停止信号传递）
-- skein/crates/executor/src/blocking.rs（阻塞算子执行上下文）
-- skein/docs/ARCHITECTURE.md（执行内存限制）
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 设计</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
-
-# 并发模型
-
-<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-同一进程内，任务共享受控的执行资源，事务基于稳定快照读取数据。
+<div class="mt-4 mb-6 c2 text-sm leading-relaxed">
+流式算子分批传递数据；排序、聚合先积累状态，再输出结果。
 </div>
 
 <div class="deck-split mt-6">
 
 <div v-click>
-  <div class="c1 font-semibold mb-3">任务调度与并行执行</div>
+  <div class="c1 font-semibold mb-3">并行调度</div>
   <div class="c2 text-sm leading-relaxed space-y-3">
-    <div>宿主决定任务何时运行，运行时准入控制限制同时运行的工作量。</div>
-    <div>适合并行的执行路径把输入拆成独立的数据块，交给共享线程池处理。</div>
-    <div>CPU 和内存预算共同限制并行度。</div>
+    <div>任务通过准入控制；可并行路径分块，由共享线程池处理。</div>
+    <div>CPU 与内存预算限制同时运行的工作量。</div>
   </div>
 </div>
 
 <div v-click>
   <div class="c1 font-semibold mb-3">读写并发</div>
   <div class="c2 text-sm leading-relaxed space-y-3">
-    <div>读者固定一个快照，后续提交不会改变它正在读取的数据视图。</div>
-    <div>并发事务在各自的私有工作区准备修改，通过冲突检查或锁协调写入。</div>
-    <div>持久化提交与状态发布串行完成，新读者看到发布后的状态。</div>
+    <div>读者使用固定快照；写者准备私有修改，并协调冲突。</div>
+    <div>持久化提交与状态发布串行完成。</div>
   </div>
 </div>
 
@@ -511,6 +479,7 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 </div>
 
 <!--
+- 优化器选好物理计划后，执行器沿算子链完成查询。流式算子分批传递数据，调用方拿到足够结果后可提前停止；排序、聚合需要保留中间状态，受内存预算约束。
 - 并发分成两部分：执行任务怎样调度，以及对共享数据的访问怎样协调。
 - 宿主调度任务，运行时控制同时运行的工作量。适合并行的执行路径会把输入分块，交给共享线程池；并不是所有算子都会并行。
 - 读者保持固定快照。并发写者准备各自的私有修改，通过检查或锁协调冲突。
@@ -518,6 +487,9 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 - 这是进程内的并发模型，同一数据库路径共享一个根句柄，不代表支持多个进程同时写入同一批文件，也不承诺通用的可串行化隔离级别。
 
 [Sources]
+- skein/src/executor/batch.rs（物理计划分派、过滤、投影）
+- skein/crates/executor/src/pipeline.rs（批次输出与停止信号传递）
+- skein/crates/executor/src/blocking.rs（阻塞算子执行上下文）
 - skein/crates/runtime-tokio/src/lib.rs（执行前的任务准入）
 - skein/crates/executor/src/concurrent.rs（共享线程池）
 - skein/crates/executor/src/morsel.rs（受限并行任务）

@@ -2,7 +2,7 @@
 
 ## Current deck
 
-The deck contains 25 slides in four parts: storage choices, engine design,
+The deck contains 24 slides in four parts: storage choices, engine design,
 verification and delivery, and rollout. The main narrative is in Chinese.
 The slide-by-slide review is recorded in [NARRATIVE_REVIEW.md](NARRATIVE_REVIEW.md).
 
@@ -59,24 +59,24 @@ latency or constant whole-database memory.
 ## Presenter-provided status and directions
 
 On 2026-09-05, the presenter reported that Skein is integrated into Nowledge Mem
-and gradual rollout has started. Slide 22 states this update. It is not an
+and gradual rollout has started. Slide 21 states this update. It is not an
 independently inspected deployment result or a claim that full rollout is done.
 
 The presenter described MCP query access and branch support for the AI-native
-database narrative on slide 15. The slide uses independent task exploration
+database narrative on slide 14. The slide uses independent task exploration
 to explain the purpose of branches. This is presenter-provided capability
 context, not independent implementation verification of an MCP server or
 branch lifecycle APIs.
 
 The presenter also specified four future directions on 2026-09-05: open
 source, mobile support, more PostgreSQL features, and better resource control
-with feature selection from phones to servers. Slide 24 presents these as
+with feature selection from phones to servers. Slide 23 presents these as
 future work, without adding release dates or claiming completed support.
 
 ## Before the talk
 
 - Confirm the event name, city, and date; the deck currently says PyConf 2026.
-- Rehearse the 25-slide deck against the confirmed 40-minute slot.
+- Rehearse the 24-slide deck against the confirmed 40-minute slot.
 - Refresh operational status with the presenter if the rollout changes.
 - Recheck dated benchmarks before substituting new numbers.
 
