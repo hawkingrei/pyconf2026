@@ -68,54 +68,45 @@ htmlAttrs:
 </div>
 
 <!--
-开场：
-- 不是一个"我们发布了新产品"的分享，是一个存储工程决策的分享。
-- 开场可以直接问观众："如果你的 AI Agent 记忆，同时活在三个数据库里——一个图库、一个向量库、一个关系库——你会怎么保证它们一致？"
-- 停顿。然后说："我们也没有很好的答案。所以我们在造第四个东西，把前三个合并掉。这就是今天要讲的 Skein。"
+一条记忆既有原始内容，也有实体关系，还要支持语义检索。今天讲我们为什么把这些工作收进同一个存储引擎，以及实现和交付时做了哪些取舍。
 -->
 
 ---
 
-<div class="sec mb-4">Overview</div>
+# 分享路线
 
-# Overview
-
-<div class="mt-6 grid grid-cols-5 gap-5">
+<div class="mt-6 grid grid-cols-4 gap-5">
 
 <div>
   <div class="c4 text-xs font-mono mb-2">01</div>
-  <div class="c1 text-sm font-semibold mb-2">Why</div>
+  <div class="c1 text-sm font-semibold mb-2">选型</div>
   <div class="c3 text-xs leading-relaxed">三个数据库，一份记忆，谁来保证一致</div>
 </div>
 
 <div>
   <div class="c4 text-xs font-mono mb-2">02</div>
-  <div class="c1 text-sm font-semibold mb-2">What</div>
+  <div class="c1 text-sm font-semibold mb-2">引擎</div>
   <div class="c3 text-xs leading-relaxed">Skein 是什么：嵌入式、统一引擎、面向 AI 的查询</div>
 </div>
 
 <div>
   <div class="c4 text-xs font-mono mb-2">03</div>
-  <div class="c1 text-sm font-semibold mb-2">How</div>
-  <div class="c3 text-xs leading-relaxed">先建模再编码：64 个 TLA+ 规格与诚实的边界</div>
+  <div class="c1 text-sm font-semibold mb-2">验证</div>
+  <div class="c3 text-xs leading-relaxed">模型检查、结果对照、交付检查与性能测量</div>
 </div>
 
 <div>
   <div class="c4 text-xs font-mono mb-2">04</div>
-  <div class="c1 text-sm font-semibold mb-2">Status</div>
-  <div class="c3 text-xs leading-relaxed">现状、两个真实的教训，和接下来两件事</div>
+  <div class="c1 text-sm font-semibold mb-2">灰度</div>
+  <div class="c3 text-xs leading-relaxed">产品集成、灰度路径与后续方向</div>
 </div>
 
-<div>
-  <div class="c4 text-xs font-mono mb-2">05</div>
-  <div class="c1 text-sm font-semibold mb-2">So What</div>
-  <div class="c3 text-xs leading-relaxed">这跟一个 Python 大会有什么关系</div>
-</div>
+
 
 </div>
 
 <!--
-30 秒过场。手势扫五列："今天分五段：先看问题，再看 Skein 是什么，然后看我们怎么证明它是对的，现状诚实地讲一遍，最后聊聊为什么这跟你们有关系。"
+先说明选型问题，再看引擎怎样组织查询与数据。第三部分讲验证和交付，第四部分讲灰度进展和后续方向。
 -->
 
 ---
@@ -125,9 +116,9 @@ class: deck-part-hero
 
 <div class="text-center deck-section-hero">
 
-<div class="progress-bar mb-8 justify-center"><span class="active">01 Why</span><span class="dot">·</span><span>02 What</span><span class="dot">·</span><span>03 How</span><span class="dot">·</span><span>04 Status</span><span class="dot">·</span><span>05 So What</span></div>
+<div class="progress-bar mb-8 justify-center"><span class="active">01 选型</span><span class="dot">·</span><span>02 引擎</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
 
-<div class="c4 text-sm tracking-widest uppercase mb-4">Part 1</div>
+<div class="c4 text-sm tracking-widest uppercase mb-4">第 1 部分</div>
 
 # 为什么要重新造一个存储引擎
 
@@ -138,14 +129,14 @@ class: deck-part-hero
 </div>
 
 <!--
-过渡：从上一页的 Overview 直接进这页。"先说清楚我们为什么要造轮子——因为我们已经有三个轮子了，它们不咬合。"
+先看我们原来的存储组合，以及为什么应用层承担了越来越多的协调工作。
 -->
 
 ---
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span class="active">01 Why</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span class="active">01 选型</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 一份记忆，三份存储
 
@@ -158,15 +149,15 @@ Nowledge Mem 的每一条记忆，同时要满足三种访问模式：<br/>
 </div>
 
 <div v-click class="mt-4">
-  <div class="c1 font-semibold mb-2">当时没有合适的一体化嵌入式引擎，于是我们用了三个专门的数据库</div>
+  <div class="c1 font-semibold mb-2">三种访问模式，分别交给专门的存储</div>
   <div class="c2 text-sm leading-relaxed">
     <strong class="c1">Kuzu / Ladybug</strong>（图）· <strong class="c1">LanceDB</strong>（向量 + 全文）· <strong class="c1">SQLite</strong>（关系型内容）<br/>
-    <span class="c3">每一个都是各自领域里成熟的选择。我们没有找到能在本地同时统一图遍历、向量/全文检索和事务性内容存储的引擎。</span>
+    <span class="c3">这是 Mem 当时采用的分工：图存储维护关系，搜索索引负责召回，内容存储保留原文。</span>
   </div>
 </div>
 
 <div v-click class="mt-3 c2 text-sm leading-relaxed">
-  <strong class="c1">这不是任何一个数据库不够好</strong>；难点在于一条记忆要被拆成三份状态，再由应用层把它们重新拼成一个整体。
+  同一条记忆的身份、更新和删除，需要由应用层协调。
 </div>
 </div>
 
@@ -186,154 +177,75 @@ Nowledge Mem 的每一条记忆，同时要满足三种访问模式：<br/>
 </div>
 
 <!--
-讲法提示：
-- "问题不在任何一个数据库本身，Kuzu、LanceDB、SQLite 单独看都很好。我们当时没有找到一款适合本地嵌入、同时覆盖三种访问模式的一体化引擎。"
-- 所以我们把每种模式交给最擅长它的存储；真正的代价是同一条记忆被拆成三份状态，系统必须把它们重新拼起来。
-- 过渡到下一页："最常见的问题是：那为什么不干脆只用 SQLite？"
+这页只交代旧架构：关系、检索和内容分别落在三个系统里。
+下一步先回答选型问题：能否直接把它们都放进 SQLite？
 -->
 
 ---
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span class="active">01 Why</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span class="active">01 选型</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
-# 为什么不是直接用 SQLite？
+# 为什么不直接用 SQLite？
 
-<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-<strong class="c1">嵌入是部署形态，不是性能定位。</strong>SQLite 和 Skein 都以库的形式进入应用进程：无需独立服务。AI 主机会成为多个 Agent 共用的计算节点，需要把查询、写入和维护放进同一套资源治理。
-</div>
-
-<div class="db-capability-grid mt-5">
-  <div class="db-capability db-capability--sqlite">
-    <div class="db-capability__name">SQLite</div>
-    <div class="db-capability__role">内容与事务</div>
-    <div class="db-capability__strength">✓ 关系行、ACID、嵌入式部署<br/>✓ FTS5 做词法全文检索</div>
-    <div class="db-capability__limit">图要自己建节点/边表再写 recursive CTE；ANN 向量检索要接扩展。多个 Agent 同时检索、写入和维护时，跨模态查询与资源调度仍要由应用层组合。</div>
+<div class="deck-challenge-lede c2 text-base leading-relaxed mt-3">SQLite 能承载内容和事务。我们的取舍在于：图遍历、检索和它们的生命周期，要由谁来组织。</div>
+<div class="deck-split mt-6">
+  <div v-click>
+    <div class="c1 font-semibold mb-3">SQLite 已有的能力</div>
+    <div class="c2 text-sm leading-relaxed space-y-3">
+      <div>进程内嵌入、关系数据和事务。</div>
+      <div>FTS5 提供词法全文检索。</div>
+      <div>节点表、边表配合递归查询，可以表达图遍历。</div>
+    </div>
   </div>
-  <div class="db-capability db-capability--graph">
-    <div class="db-capability__name">Kuzu / Ladybug</div>
-    <div class="db-capability__role">关系与多跳遍历</div>
-    <div class="db-capability__strength">✓ 图身份、关系、Cypher<br/>✓ 多跳路径与图算子</div>
-    <div class="db-capability__limit">不适合承载长内容；在 Mem 里，向量/全文仍需要独立的搜索投影。</div>
-  </div>
-  <div class="db-capability db-capability--search">
-    <div class="db-capability__name">LanceDB</div>
-    <div class="db-capability__role">向量与全文检索</div>
-    <div class="db-capability__strength">✓ 向量召回、BM25 / FTS<br/>✓ 快速、可重建的检索投影</div>
-    <div class="db-capability__limit">它不是事实源：删除或损坏后要从图和内容存储重建，不能独自拥有一条记忆。</div>
+  <div v-click>
+    <div class="c1 font-semibold mb-3">Mem 仍需组织的工作</div>
+    <div class="c2 text-sm leading-relaxed space-y-3">
+      <div>把实体、关系和路径作为直接的查询对象。</div>
+      <div>把向量召回与图、内容查询接起来。</div>
+      <div>协调数据变更、索引更新和恢复。</div>
+    </div>
   </div>
 </div>
-
-<div v-click class="db-unification mt-5">
-  <span>图关系</span><b>＋</b><span>语义/全文检索</span><b>＋</b><span>原始内容</span>
-  <strong>一份数据 · 一个 catalog · 一个 WAL · 一个查询计划</strong>
-  <em>多 Agent 共用 · 用户查询优先 · 维护任务受控</em>
-</div>
+<div v-click class="callout mt-6">继续组合现有能力，还是把这套语义和生命周期收进引擎，是这次选型的核心。</div>
 
 </div>
 
 <!--
-讲法提示：
-- 这里的“嵌入式”是数据库作为库进入应用进程，不是面向低配嵌入式设备。SQLite 和 Skein 都可这样部署，SQLite 的 FTS5 也很成熟。这里不是“SQLite 不行”。
-- AI 主机的负载不同：同一台机器会成为多个 Agent 共用的计算节点，查询、写入和后台投影/维护必须争取同一份 CPU、内存和 I/O 预算。
-- SQLite 可以用边表和 recursive CTE 做图，也可以通过扩展获得 ANN；代价是我们仍要把图、向量、全文和它们的生命周期组合起来，并在应用层安排这些工作。
-- Kuzu/Ladybug 和 LanceDB 同理：前者是关系事实源，后者是可重建检索投影。三者各自正确，但没有一个独自拥有整条 Mem 访问路径。
-- Skein 追求的是最后两行的统一边界：同一份 catalog、WAL、查询计划，以及多 Agent 工作负载的前后台资源治理；这不是宣称替代所有通用数据库。
-- 过渡到下一页："这就是组合以后，真正出现的问题。"
+SQLite 的事务、全文检索和递归查询都可以复用。对 Mem 而言，继续组合意味着应用还要维护图查询、向量召回以及它们和原始内容之间的约定。
+这是一项围绕具体负载的取舍，不是对 SQLite 的通用能力排名。
+接下来用一次写入和一次读取，说明这些协调工作出现在哪里。
 
 [Sources]
-- SQLite, "Appropriate Uses For SQLite," 2025-05-31: https://www.sqlite.org/whentouse.html
-- SQLite, "Write-Ahead Logging," accessed 2026-09-03: https://www.sqlite.org/wal.html
-- Skein, "Architecture," local source: skein/docs/ARCHITECTURE.md
+- https://www.sqlite.org/whentouse.html
+- https://www.sqlite.org/lang_with.html
+- https://www.sqlite.org/fts5.html
+- skein/docs/ARCHITECTURE.md
 -->
 
 ---
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span class="active">01 Why</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span class="active">01 选型</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
-# 问题不在选择，而在边界
+# 跨库协调的代价
 
-<div class="deck-challenge-lede c2 text-base leading-loose mb-5">
-每一个系统都适合自己的访问模式；难点是同一条记忆被投影成三份<strong class="c1">可以独立失败的状态</strong>。
-</div>
-
-<div class="grid grid-cols-2 gap-x-10 gap-y-6 text-sm leading-relaxed">
-  <div v-click>
-    <div class="c1 font-semibold mb-1"><span class="num">01</span> 一致性不是原子的</div>
-    <div class="c2">一次写入拆成三次提交；没有跨库事务，崩溃后的补偿与对账留给应用。</div>
-  </div>
-  <div v-click>
-    <div class="c1 font-semibold mb-1"><span class="num">02</span> 索引会落后于内容</div>
-    <div class="c2">图和向量都是内容的投影；异步更新、失败重试和重建窗口都会制造短暂不一致。</div>
-  </div>
-  <div v-click>
-    <div class="c1 font-semibold mb-1"><span class="num">03</span> 读路径要跨库拼接</div>
-    <div class="c2">图或向量查询先返回 ID，再回内容存储 hydration；额外的 lookup 与序列化也会放大尾延迟。</div>
-  </div>
-  <div v-click>
-    <div class="c1 font-semibold mb-1"><span class="num">04</span> 演进与恢复是三份工作</div>
-    <div class="c2">Schema、WAL、备份和可观测性各走一套；定位一次问题，要拼三份证据。</div>
-  </div>
-</div>
-
-<div v-click class="callout mt-6">
-  Skein 的目标不是否定这些专用系统；而是把一份记忆的事务、WAL、catalog 和查询执行收回到同一个嵌入式引擎：同时追求正确性与性能。
+<div class="deck-challenge-lede c2 text-base leading-relaxed mt-3">当三个系统可以独立成功或失败，应用必须维护整条记忆的状态。</div>
+<div class="grid grid-cols-2 gap-x-10 gap-y-6 mt-6 text-sm leading-relaxed">
+  <div v-click><div class="c1 font-semibold mb-2">写入：部分成功怎么办</div><div class="c2">内容已经提交，图或搜索更新失败，需要补偿、重试和对账。</div></div>
+  <div v-click><div class="c1 font-semibold mb-2">更新：索引何时追上事实</div><div class="c2">图事实和内容已经变化，检索投影仍可能处于异步更新或重建中。</div></div>
+  <div v-click><div class="c1 font-semibold mb-2">读取：结果还要跨库取回</div><div class="c2">图或向量检索先返回 ID，再到内容存储取回原文，增加调用和序列化。</div></div>
+  <div v-click><div class="c1 font-semibold mb-2">恢复：状态如何重新对齐</div><div class="c2">三个系统各有日志、备份和版本，恢复后还要检查彼此是否一致。</div></div>
 </div>
 
 </div>
 
 <!--
-讲法提示：
-- 这四点是同一个问题的四个表面：同一份用户状态被拆到多个独立的故障域，而应用层成了唯一的协调者。
-- "索引会落后于内容"不是说索引异步一定错误；而是在失败、重试和重建期间，应用必须定义并维持一致性语义。
-- Skein 不是要替所有专用数据库做通用替代品。它聚焦于 Mem 需要的本地嵌入式统一数据模型和执行路径；少掉跨库 lookup、序列化和 hydration，也是性能目标，不只是正确性的附带收益。
-- 过渡到下一页："所以，AI 时代的记忆到底需要什么样的存储？"
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span class="active">01 Why</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
-
-# AI 时代的记忆，需要什么样的存储？
-
-<div class="mt-8 grid grid-cols-2 gap-x-10 gap-y-6">
-
-<div v-click class="flex gap-3">
-  <div class="num">1</div>
-  <div><div class="c1 font-semibold">本地优先</div><div class="c2 text-sm mt-1 leading-relaxed">Agent 记忆必须离线可用，不能依赖一次网络往返</div></div>
-</div>
-
-<div v-click class="flex gap-3">
-  <div class="num">2</div>
-  <div><div class="c1 font-semibold">图状</div><div class="c2 text-sm mt-1 leading-relaxed">知识天然是实体 + 关系，不是拍平的表</div></div>
-</div>
-
-<div v-click class="flex gap-3">
-  <div class="num">3</div>
-  <div><div class="c1 font-semibold">检索是一等公民</div><div class="c2 text-sm mt-1 leading-relaxed">语义搜索不该是拼贴在图库外面的一个索引</div></div>
-</div>
-
-<div v-click class="flex gap-3">
-  <div class="num">4</div>
-  <div><div class="c1 font-semibold">崩溃安全</div><div class="c2 text-sm mt-1 leading-relaxed">写入和一致性不能是"大概率正确"</div></div>
-</div>
-
-<div v-click class="flex gap-3 col-span-2 justify-center">
-  <div class="num">5</div>
-  <div><div class="c1 font-semibold">可嵌入</div><div class="c2 text-sm mt-1 leading-relaxed">像 SQLite 一样链接进程，而不是再运维一个数据库服务</div></div>
-</div>
-
-</div>
-
-</div>
-
-<!--
-念完五点后停顿一下："这五条里，最后一条'可嵌入'，是很多人容易忽略的一条。我们先讲讲为什么它这么重要，再看 Skein 怎么把前四条也做进去。"
+以保存一条记忆为例，局部提交成功并不代表整条操作完成。读路径也有类似的拼接工作。
+搜索投影可以异步更新，但必须有明确的更新和恢复约定；图中的实体关系本身不能笼统地当作可丢弃索引。
+这些协调成本促成了 Skein：把数据和查询的边界交给同一个引擎管理。
 -->
 
 ---
@@ -343,9 +255,9 @@ class: deck-part-hero
 
 <div class="text-center deck-section-hero">
 
-<div class="progress-bar mb-8 justify-center"><span>01 Why</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03 How</span><span class="dot">·</span><span>04 Status</span><span class="dot">·</span><span>05 So What</span></div>
+<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
 
-<div class="c4 text-sm tracking-widest uppercase mb-4">Part 2</div>
+<div class="c4 text-sm tracking-widest uppercase mb-4">第 2 部分</div>
 
 # Skein 是什么
 
@@ -359,99 +271,63 @@ class: deck-part-hero
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
-# 电梯演讲
+# 一个引擎，三类职责
 
-<div class="mt-6 deck-closing-quote" style="max-width: 44rem; margin: 0 auto;">
-"Skein 是一个嵌入式 Rust 数据库引擎，目标是成为 Nowledge Mem 的<strong class="c1">唯一</strong>本地存储层——<br/>
-用一个 WAL、一个优化器、一个进程，取代 Kuzu + LanceDB + SQLite 三件套。"
+<div class="deck-challenge-lede c2 text-base leading-relaxed mt-3">Skein 是面向 Agent 记忆的嵌入式 Rust 数据库引擎，统一管理图、内容和检索。</div>
+<div class="grid grid-cols-3 gap-6 mt-7 text-sm leading-relaxed">
+  <div v-click><div class="c1 font-semibold mb-3">语言前端</div><div class="c2">Cypher 与 PostgreSQL SQL / SQL-PGQ。</div><div class="c3 mt-3">解析与绑定后，进入共享计划。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">查询与存储内核</div><div class="c2">计划、优化器、执行器，以及图和关系数据。</div><div class="c3 mt-3">统一 catalog、事务与 WAL。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">检索与运行支持</div><div class="c2">全文、向量检索、图分析，以及资源治理。</div><div class="c3 mt-3">按职责分模块，部分能力可按需组合。</div></div>
 </div>
-
-<div v-click class="mt-6 text-center c2 text-base">
-定位：<strong class="c1">SQLite，但是为 AI Agent 的图状记忆而生</strong>
-</div>
-
-<div v-click class="mt-6">
-<div class="merge-graphic merge-graphic--lg mx-auto">
-
-<div class="merge-row">
-  <div class="merge-node merge-node--sky"><ph-graph class="merge-node__icon" /><div class="merge-node__label">Kuzu /<br/>Ladybug</div><div class="merge-node__role">图存储</div></div>
-  <div class="merge-node merge-node--teal"><ph-magnifying-glass class="merge-node__icon" /><div class="merge-node__label">LanceDB</div><div class="merge-node__role">向量 · 全文</div></div>
-  <div class="merge-node merge-node--rose"><ph-table class="merge-node__icon" /><div class="merge-node__label">SQLite</div><div class="merge-node__role">关系型内容</div></div>
-</div>
-
-<svg class="merge-lines" viewBox="0 0 300 68" width="100%" height="68" preserveAspectRatio="none" aria-hidden="true">
-  <path d="M50,0 C50,38 100,52 150,64" fill="none" stroke="var(--sky)" stroke-width="2.6" stroke-linecap="round" opacity="0.8" />
-  <path d="M150,0 L150,64" fill="none" stroke="var(--teal)" stroke-width="2.6" stroke-linecap="round" opacity="0.8" />
-  <path d="M250,0 C250,38 200,52 150,64" fill="none" stroke="var(--rose)" stroke-width="2.6" stroke-linecap="round" opacity="0.8" />
-</svg>
-
-<div class="merge-node merge-node--unified"><ph-git-merge class="merge-node__icon" /><div class="merge-node__label">Skein</div><div class="merge-node__role">一个嵌入式引擎</div></div>
-
-</div>
-</div>
+<div v-click class="callout mt-6">部署在同一个进程里，内部仍保持清晰的模块边界。</div>
 
 </div>
 
 <!--
-- 电梯演讲那句话，读两遍，第一遍正常速度，第二遍放慢，强调"唯一"两个字。
-- 图示扫一遍："三个变一个，不是删掉功能，是把边界收进一个进程里。"
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
-
-# 嵌入式优先，也可服务化
-
-<div class="deck-split">
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">AI Local：像 SQLite 一样，链接进程</div>
-  <div class="c2 text-sm leading-relaxed">
-    Agent 与数据库在同一进程：没有网络往返，没有独立部署，也不用再运维一个数据库服务。<br/>
-    <span class="c3">这正是本地优先 AI Agent 需要的低延迟、离线可用形态。</span>
-  </div>
-</div>
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">服务化：由宿主掌握调度权</div>
-  <div class="c2 text-sm leading-relaxed">
-    多个 Agent 或设备接入时，宿主把同一套 database facade 放在服务 API 后，并拥有业务优先级的全局视图。<br/>
-    <span class="c3">按业务安排统计信息刷新、索引/投影维护与后台任务；把 CPU、内存和 I/O 留给用户正在等待的 Agent 查询。</span>
-  </div>
-</div>
-
-</div>
-
-<div v-click class="mt-6 callout">
-<strong class="c1">一个内核，两种部署形态</strong>：本地直接嵌入；需要共享或统一治理时由宿主服务化。<br/>
-<span class="c3">服务化的价值不只是远程访问，而是把数据库工作纳入业务调度；catalog、WAL、事务与查询计划仍然只有一份。</span>
-</div>
-
-</div>
-
-<!--
-- "AI Local 不是拒绝服务端，而是先保证本地路径没有服务依赖。需要共享或统一治理时，把同一个内核交给宿主服务化，不必复制一套数据库。"
-- 服务化不只是开一个网络入口。宿主知道哪些是用户正在等的 Agent 查询，哪些是可以延后的统计信息刷新（例如未来的 auto analyze）、索引/投影维护和后台任务；它能按业务优先级把 CPU、内存、I/O 预算和调度顺序分给它们。
-- 这是 host-owned policy：Skein 提供同一份 catalog、WAL、事务、查询计划及 QoS 接口；宿主决定业务优先级和 worker 的实际运行时机。不要把它描述成已存在的独立 Skein server 产品。
+这一页是后续几页的地图：先看它怎样嵌入应用，再看查询如何经过前端、优化器和执行器，最后看检索如何使用这些能力。
+统一引擎不要求所有实现挤进一个模块。接口和依赖方向仍需要保持清楚。
 
 [Sources]
-- Skein, "Architecture," local source: skein/docs/ARCHITECTURE.md (QoS and background-maintenance boundaries)
+- skein/docs/ARCHITECTURE.md（模块结构与共享内核）
+- skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md（可组合能力）
 -->
 
 ---
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
+
+# 嵌入式优先，也可由宿主服务化
+
+<div class="deck-split mt-6">
+  <div v-click><div class="c1 font-semibold mb-3">本地嵌入</div><div class="c2 text-base leading-relaxed">宿主应用在进程内调用数据库，不需要独立的数据库服务。</div><div class="c3 text-sm mt-4 leading-relaxed">适合离线使用和本地低延迟查询。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">宿主服务化</div><div class="c2 text-base leading-relaxed">需要共享访问时，由宿主把同一套数据库接口放在服务 API 后。</div><div class="c3 text-sm mt-4 leading-relaxed">连接管理和业务调度由宿主负责。</div></div>
+</div>
+<div class="callout mt-6">这是同一个内核的两种接入方式；服务化由宿主实现。</div>
+
+</div>
+
+<!--
+本地嵌入解决进程内调用和离线使用。共享访问则可以由宿主包装服务接口，内核无需复制成另一套实现。
+这里说明集成边界，不代表已经提供一个独立的 Skein server 产品。
+下面进入查询路径：不同查询语言怎样使用同一套内核。
+
+[Sources]
+- skein/docs/ARCHITECTURE.md（宿主集成与运行边界）
+-->
+
+---
+
+<div class="deck-slide-body">
+
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 一个引擎，两种查询语言
 
-<div class="mt-4 c2 text-sm">Cypher 和 PostgreSQL SQL / SQL-PGQ，只在"绑定"之后汇合——之后是同一套算子、同一个优化器、同一个存储引擎。</div>
+<div class="mt-4 c2 text-sm">两种语言分别解析和绑定，随后汇入共享逻辑计划。</div>
 
 <div class="query-flow mt-6" aria-label="Cypher and PostgreSQL SQL converge into the shared query execution pipeline">
   <div class="query-flow__lane query-flow__lane--cypher">
@@ -487,16 +363,14 @@ class: deck-part-hero
   </div>
 </div>
 
-<div v-click class="mt-5 c2 text-sm leading-relaxed">
-SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方言，实现的是 <strong class="c1">ISO/IEC 9075-16 SQL/PGQ</strong>——<code class="text-xs">CREATE PROPERTY GRAPH</code> 和作为 <code class="text-xs">FROM</code> 子句成员的 <code class="text-xs">GRAPH_TABLE</code>。<br/>
-<span class="c3">诚实的边界：这是"SQL 里内嵌图查询"，不是独立的 ISO/IEC 39075 GQL 实现——也从不会把 SQL/PGQ 语句翻译成 Cypher 文本再执行，两条语言从解析开始就落到同一套类型化表达式上。</span>
-</div>
+<div v-click class="mt-5 c2 text-sm leading-relaxed">SQL/PGQ 通过 <code>CREATE PROPERTY GRAPH</code> 和 <code>GRAPH_TABLE</code>，在 SQL 中表达图查询。</div>
 
 </div>
 
 <!--
-"两条路走进来，一条从 Cypher，一条从标准 SQL 加 GRAPH_TABLE 语法——绑定完之后，走的是完全一样的优化器和执行器。这意味着你可以用 SQL 写关系查询，用 Cypher 写图遍历，查的是同一份数据，同一套一致性保证。"
-- "SQL 那侧不是我们自己发明的方言，是在实现一个正在成型的 ISO 标准——SQL/PGQ，PostgreSQL 自己的主干也还在跟进同一个标准。我们特意没有去碰独立 GQL 那个更大的标准，范围是清楚的。"
+两条前端路径分别完成解析和绑定，之后共享计划、优化和执行。
+SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里不展开标准编号或方言版本，也不等同于独立 GQL 实现。
+下一页只展开图中的优化器。
 
 [Sources]
 - skein/docs/specs/POSTGRES_SQL_PGQ_SPEC.md
@@ -506,7 +380,7 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 优化器流程
 
@@ -526,16 +400,11 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
   <div class="pipe-box">物理计划<span class="pipe-box__sub">具体怎么执行</span></div>
 </div>
 
-<div class="mt-6 c2 text-sm leading-relaxed space-y-3">
-  <div v-click><strong class="c1">改写：</strong>用规则简化逻辑计划，保持查询结果不变。</div>
-  <div v-click><strong class="c1">搜索与比较：</strong>考虑连接顺序、数据访问方式，比较各自的估算代价。</div>
-  <div v-click><strong class="c1">选定计划：</strong>生成物理计划，交给执行器运行。</div>
-</div>
+<div v-click class="mt-6 c2 text-base leading-relaxed">同一个查询可以有不同的连接顺序和数据访问方式；优化器按估算代价选择计划。</div>
 
 </div>
 
 <!--
-- Cypher 和 SQL 汇入同一套逻辑计划，描述查询要计算什么。
 - 先用规则简化计划，保持查询语义不变。
 - 再考虑不同的执行方式，例如先连接哪些表、怎样读取数据，并比较估算代价。
 - 最后选出物理计划，告诉执行器具体怎么做。代价是估算值，不保证实际执行一定最快。
@@ -551,7 +420,7 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 执行器原理
 
@@ -572,7 +441,6 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
 </div>
 
 <div class="mt-6 c2 text-sm leading-relaxed space-y-3">
-  <div v-click><strong class="c1">算子连接：</strong>物理计划决定运行哪些操作，以及它们怎样连接。</div>
   <div v-click><strong class="c1">分批处理：</strong>流式算子每次处理一批大小受限的数据，再传给下一个算子。</div>
   <div v-click><strong class="c1">阻塞操作：</strong>排序、聚合需要先积累状态，再输出结果，过程受内存预算约束。</div>
 </div>
@@ -596,7 +464,7 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
 # 并发模型
 
@@ -626,10 +494,6 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
 
 </div>
 
-<div class="callout mt-5 text-sm">
-同一数据库路径只保留一个根句柄，由进程内的调用方共享。并行执行不改变事务的数据可见性。
-</div>
-
 </div>
 
 <!--
@@ -652,107 +516,45 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
-# 架构地图
+# 检索：关键词与语义相似
 
-<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-Skein 不是一个巨型 crate。我们按<strong class="c1">职责与依赖方向</strong>拆分：把变化快的语言前端放在边缘，把稳定的查询与存储内核锁在中间。
+<div class="deck-split mt-6">
+  <div v-click><div class="c1 font-semibold mb-3">全文检索</div><div class="c2 text-base leading-relaxed">用 BM25 匹配关键词，适合名称、术语和明确出现过的表达。</div><div class="c3 text-sm mt-4">默认启用，也可按需裁剪。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">向量检索</div><div class="c2 text-base leading-relaxed">按向量相似度召回，寻找措辞不同但语义接近的内容。</div><div class="c3 text-sm mt-4">与图和内容查询使用同一个引擎。</div></div>
 </div>
-
-<div class="crate-legend mt-3" aria-label="Module categories">
-  <span class="crate-legend__item crate-legend__item--surface">语言前端</span>
-  <span class="crate-legend__item crate-legend__item--kernel">共享内核</span>
-  <span class="crate-legend__item crate-legend__item--extension">投影与运营能力</span>
-</div>
-
-<div class="crate-grid">
-  <div class="crate-card crate-card--kernel"><div class="crate-card__name">core</div><div class="crate-card__role">错误、值、ID、catalog、schema 描述</div></div>
-  <div class="crate-card crate-card--surface"><div class="crate-card__name">cypher</div><div class="crate-card__role">Cypher 词法 / 语法 / AST</div></div>
-  <div class="crate-card crate-card--surface"><div class="crate-card__name">sql-syntax / sql</div><div class="crate-card__role">PostgreSQL SQL + SQL/PGQ 语义降解</div></div>
-  <div class="crate-card crate-card--kernel"><div class="crate-card__name">plan</div><div class="crate-card__role">共享逻辑 / 物理 IR，指纹，explain</div></div>
-  <div class="crate-card crate-card--kernel"><div class="crate-card__name">optimizer</div><div class="crate-card__role">Cascades memo / rules，图代价模型</div></div>
-  <div class="crate-card crate-card--kernel"><div class="crate-card__name">storage</div><div class="crate-card__role">存储协议、MVCC、WAL、索引</div></div>
-  <div class="crate-card crate-card--kernel"><div class="crate-card__name">executor</div><div class="crate-card__role">物理算子 / 查询执行</div></div>
-  <div class="crate-card crate-card--extension"><div class="crate-card__name">analytics</div><div class="crate-card__role">不可变 CSR/CSC 投影，PageRank / Louvain</div></div>
-  <div class="crate-card crate-card--extension"><div class="crate-card__name">qos</div><div class="crate-card__role">资源分级、后台准入、期望值调度</div></div>
-  <div class="crate-card crate-card--extension"><div class="crate-card__name">vector-projection</div><div class="crate-card__role">向量投影 / ANN 候选集扫描</div></div>
-  <div class="crate-card crate-card--extension"><div class="crate-card__name">evidence</div><div class="crate-card__role">发布身份、崩溃恢复证据合约</div></div>
-  <div class="crate-card crate-card--extension"><div class="crate-card__name">telemetry / readiness</div><div class="crate-card__role">可观测性、就绪度、qualification / fuzz</div></div>
-</div>
-
-<div class="callout mt-4 text-sm">
-  根 crate 只保持稳定的嵌入式 API；内部模块维持单向依赖。搜索、图分析、QoS 与运行证据拥有独立边界，部分能力可以按 feature 组合——<code class="text-xs">vector-search</code>、<code class="text-xs">graph-analytics</code>、<code class="text-xs">background-maintenance</code>，以及下一页要讲的 <code class="text-xs">full-text-search</code>，都是可以按需裁掉的默认 feature。
-</div>
+<div v-click class="callout mt-6">检索索引是可重建投影。索引损坏时，从权威数据恢复，不丢弃图事实和原始内容。</div>
 
 </div>
 
 <!--
-"不要逐个念。这张图不是 crate 清单，而是模块化设计：蓝色是会变化的语言前端，橙色是稳定的共享内核，绿色是可独立演进的投影和运营能力。"
-- 根 crate 只提供稳定的嵌入式 facade；内部实现可以在不扩大用户 API 的前提下演进。
-- 依赖方向保持无环：上层不会反过来依赖下层。这样既能按 feature 组合能力，也把形式化与测试的责任边界说清楚。
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
-
-# 全文检索是内核能力，不是外挂
-
-<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-第一部分说过"检索是一等公民"——这不只是口号：全文检索是 Skein 的<strong class="c1">默认 Cargo feature</strong>，跟图查询、向量检索长在同一个引擎里，不是绑一个外部搜索服务。
-</div>
-
-<div class="deck-split mt-4">
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">可重建投影，不是权威数据</div>
-  <div class="c2 text-sm leading-relaxed">
-    BM25 全文索引和 ANN 向量索引、属性索引、成员过滤器一样，都是<strong class="c1">可重建投影</strong>。<br/>
-    <span class="c3">这份索引损坏，绝不能让图上的权威数据变得不可恢复——这跟前面"LanceDB 是可重建投影"是同一条设计哲学，现在原生长在 Skein 里。</span>
-  </div>
-</div>
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">独立的生产验收路径</div>
-  <div class="c2 text-sm leading-relaxed">
-    <code class="text-xs">qualification/production_search</code> 和 <code class="text-xs">graph_search</code> 是两个独立模块——全文/图检索的生产就绪度单独验收，不搭图存储验收的便车。
-  </div>
-</div>
-
-</div>
-
-</div>
-
-<!--
-"很多人第一反应是'图数据库 + 全文检索'要接一个 Elasticsearch 或者外部搜索服务。我们的做法不一样：全文检索是内核 feature，默认打开，跟图查询、向量检索共享同一套存储和一致性边界。"
-- "索引本身是可重建投影这条原则，不是新发明——上一页讲的向量投影也是同一套原则。BM25 索引坏了，重建就好，图上的权威数据不受影响。"
+关键词和语义相似是互补的检索入口，这里不承诺某个自动混合排序策略。
+重点是索引的生命周期：图事实和原始内容是恢复依据，全文和向量索引可以重建。
+下一页看另一种访问方式：让 LLM 根据图结构生成受约束的查询。
 
 [Sources]
-- skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md
-- skein/crates/qualification/src/production_search/, graph_search.rs
+- skein/docs/ARCHITECTURE.md（全文与向量检索）
+- skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md（默认能力与可重建投影）
 -->
 
 ---
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
-# 面向 AI 的具体能力：GraphRAG 安全查询生成
+# LLM 起草查询，执行前校验
 
 <div class="deck-split">
 
 <div>
 <div v-click class="deck-challenge-lede c2 text-base leading-loose">
-这可能是整个项目里最直接的"AI 时代"注脚——<br/>
-Skein 里有一条路径，专门设计给 LLM 用来安全地查询图谱。
+LLM 根据受限的 schema 视图起草查询，Skein 在执行前检查查询约束。
 </div>
 
 <div v-click class="mt-4">
-  <div class="c1 font-semibold mb-2">GraphRagSchemaContext</div>
+  <div class="c1 font-semibold mb-2">提供结构视图</div>
   <div class="c2 text-sm leading-relaxed">
     给 LLM 一个"目录级"的图 schema 视图：labels、关系类型、常见的 1-2 跳路径。<br/>
     <span class="c3">绝不包含 payload 本体，也绝不包含 embedding 向量。</span>
@@ -763,8 +565,8 @@ Skein 里有一条路径，专门设计给 LLM 用来安全地查询图谱。
   <div class="c1 font-semibold mb-1">LLM 起草，Skein 校验</div>
   <div class="c2 text-sm leading-relaxed">
     LLM 据此起草参数化的、只读的 Cypher。<br/>
-    执行前校验：<span class="pill text-xs">标识符合法性</span> <span class="pill text-xs">跳数上界</span> <span class="pill text-xs">查询指纹</span><br/>
-    <span class="c3">指纹不是查询本身的哈希，是 LLM 当时看到的那份 schema 快照的哈希——schema 变了，查询字面没变也会被拒绝执行。</span>
+    执行前校验：<span class="pill text-xs">标识符合法性</span> <span class="pill text-xs">跳数上界</span> <span class="pill text-xs">schema 指纹</span><br/>
+    <span class="c3">指纹用于检查 schema 快照是否仍然有效。</span>
   </div>
 </div>
 </div>
@@ -786,7 +588,13 @@ Skein 里有一条路径，专门设计给 LLM 用来安全地查询图谱。
 </div>
 
 <!--
-"数据库不再只是被动等 SQL 进来。这条路径是专门为'另一端是一个会犯错的 LLM'设计的——给它一个安全的、有边界的 schema 视图，让它写查询，然后在执行前把它当作不可信输入来校验。这跟传统 ORM 的思路完全不一样。"
+LLM 获得的是图的结构信息，不是原始内容或向量。它起草参数化的只读 Cypher，执行前仍要校验标识符、跳数和 schema 指纹。
+这条路径限制模型生成查询的范围；数据库的事务、资源和权限边界仍然需要独立遵守。
+功能路径介绍到这里，接下来讲怎样验证它们。
+
+[Sources]
+- skein/docs/ARCHITECTURE.md（GraphRAG 查询路径）
+- skein/crates/core/src/graph_rag/fingerprint.rs（schema 指纹）
 -->
 
 ---
@@ -796,14 +604,14 @@ class: deck-part-hero
 
 <div class="text-center deck-section-hero">
 
-<div class="progress-bar mb-8 justify-center"><span>01 Why</span><span class="dot">·</span><span>02 What</span><span class="dot">·</span><span class="active">03 How</span><span class="dot">·</span><span>04 Status</span><span class="dot">·</span><span>05 So What</span></div>
+<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span>02 引擎</span><span class="dot">·</span><span class="active">03 验证</span><span class="dot">·</span><span>04 灰度</span></div>
 
-<div class="c4 text-sm tracking-widest uppercase mb-4">Part 3</div>
+<div class="c4 text-sm tracking-widest uppercase mb-4">第 3 部分</div>
 
-# 正确性，是设计出来的
+# 如何验证与交付
 
 <div class="c3 mt-4 text-lg">
-先建模，再编码——以及诚实的验证边界
+模型检查、结果对照、交付检查与性能测量
 </div>
 
 </div>
@@ -812,105 +620,136 @@ class: deck-part-hero
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span class="active">03 How</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span class="active">03 验证</span><span class="dot">·</span><span>04</span></div>
 
-# 先建模，后编码
+# 先检查状态变化，再实现机制
 
-<div class="stat-row">
-  <div class="stat"><div class="stat__num">64</div><div class="stat__label">TLA+ 规格<br/>覆盖几乎每一个子系统</div></div>
-  <div class="stat"><div class="stat__num">0</div><div class="stat__label">跨库事务<br/>——三库并存时代的数字</div></div>
+<div class="deck-challenge-lede c2 text-base leading-relaxed mt-3">用 TLA+ 描述并发和崩溃下的状态变化，在实现前检查关键不变量。</div>
+<div class="grid grid-cols-3 gap-6 mt-7 text-sm leading-relaxed">
+  <div v-click><div class="c1 font-semibold mb-3">提交被打断</div><div class="c2">日志写入、持久化和状态发布之间，哪些状态允许对读者可见？</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">读写交错</div><div class="c2">新提交出现后，已有读者是否仍保持原来的快照？</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">旧数据回收</div><div class="c2">仍有读者引用的旧版本，是否可能被提前删除？</div></div>
 </div>
-
-<div v-click class="mt-6 c2 text-sm leading-relaxed">
-在写并发 / 崩溃恢复相关代码之前，先枚举状态、事件、迁移、非法迁移、所有权、过期或乱序事件、安全与活性条件——这是仓库里的工程原则，不是 Skein 的例外。
-</div>
-
-<div v-click class="tla-cloud">
-  <span class="tla-tag">WAL Group Commit</span>
-  <span class="tla-tag">Page Cache Admission</span>
-  <span class="tla-tag">Transaction Concurrency</span>
-  <span class="tla-tag">Concurrent Snapshots</span>
-  <span class="tla-tag">Sparse Relational Activation</span>
-  <span class="tla-tag">Sparse Relational Recovery</span>
-  <span class="tla-tag">Index Publication</span>
-  <span class="tla-tag">Index Statistics</span>
-  <span class="tla-tag">Compaction Visibility</span>
-  <span class="tla-tag">Generation Reclamation</span>
-  <span class="tla-tag">Knowledge Retrieval Pipeline</span>
-</div>
+<div v-click class="callout mt-6">模型检查覆盖所建模的状态空间；实现还需要测试来对应这些约定。</div>
 
 </div>
 
 <!--
-"64 这个数字不是重点，重点是覆盖面——WAL、页缓存、并发事务、压缩回收、复制，甚至上一页讲的 GraphRAG 查询路径，都有对应的模型。TLC 跑 Target 配置和至少一个 mutant/反例配置，两个都要过。"
+这些场景对应提交、快照和回收模型。先写出状态与不变量，再检查事件交错，能更早发现机制里的缺口。
+正常配置应满足不变量；故意破坏机制的反例配置，应触发预期失败。模型数量本身不代表实现已经被证明。
+下一页补上代码层面的结果验证。
+
+[Sources]
+- skein/docs/tla/（提交、快照与版本回收模型）
+- skein/AGENTS.md（模型与反例验证要求）
 -->
 
 ---
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span class="active">03 How</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span class="active">03 验证</span><span class="dot">·</span><span>04</span></div>
 
-# 第二支柱：查询引擎自己跟自己对账
+# 用不同路径验证同一个结果
 
-<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-TLA+ 证明的是并发和崩溃恢复的状态机；优化器选错计划、执行器算错聚合，TLA+ 管不着。这一层交给 <strong class="c1">9 个差分 / 变形测试 oracle</strong>，思路来自 SQLancer 的 TLP（Ternary Logic Partitioning）。
+<div class="deck-challenge-lede c2 text-base leading-relaxed mt-3">差分与变形测试检查：换一种计划、表达或操作路径，结果是否仍满足同一个约定。</div>
+<div class="grid grid-cols-3 gap-6 mt-7 text-sm leading-relaxed">
+  <div v-click><div class="c1 font-semibold mb-3">换计划</div><div class="c2">同一查询走优化计划和备用计划，比较结果。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">换等价表达</div><div class="c2">改写谓词或拆分查询，组合后的结果应与原查询一致。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">对照状态模型</div><div class="c2">把写入、重启和恢复后的状态，与参考模型比较。</div></div>
 </div>
-
-<div class="stat-row">
-  <div class="stat"><div class="stat__num">9</div><div class="stat__label">metamorphic oracle<br/>graph 4 + SQL 4 + 存储 1</div></div>
-</div>
-
-<div class="db-capability-grid mt-5">
-  <div class="db-capability db-capability--graph">
-    <div class="db-capability__name">Graph 侧</div>
-    <div class="db-capability__role">Cypher 查询</div>
-    <div class="db-capability__strength">✓ Plan-differential：memo 搜索 vs 兜底直接规划<br/>✓ Graph TLP / TLP-Aggregate：<code>Q</code> 拆成 <code>p</code> / <code>NOT p</code> / <code>IS NULL</code> 三份必须并回 <code>Q</code></div>
-    <div class="db-capability__limit">另有谓词重写等价性、identifier 双射 + 关系方向反转的变形测试</div>
-  </div>
-  <div class="db-capability db-capability--sqlite">
-    <div class="db-capability__name">SQL 侧</div>
-    <div class="db-capability__role">PostgreSQL SQL / SQL-PGQ</div>
-    <div class="db-capability__strength">✓ 同一套 TLP / TLP-Aggregate，换成带主键、可空列、索引、JOIN 的关系 schema<br/>✓ Join-rewrite：3-4 表 INNER/LEFT 树，有序 vs 无序结果必须一致</div>
-    <div class="db-capability__limit">谓词重写等价性同样覆盖 SQL 侧</div>
-  </div>
-  <div class="db-capability db-capability--search">
-    <div class="db-capability__name">存储</div>
-    <div class="db-capability__role">on-disk 状态机</div>
-    <div class="db-capability__strength">✓ 直接篡改 checkpoint + WAL 尾部的原始字节<br/>✓ Strict Append oracle：对照一个纯 watermark 模型，重复 / 乱序 / 类型不符 / 重启重放都要逐位一致</div>
-    <div class="db-capability__limit">panic 判失败，带类型的 error 判正常</div>
-  </div>
-</div>
-
-<div v-click class="callout mt-4 text-sm">
-<strong class="c1">诚实的缺口</strong>：NoREC（另一种 SQLancer 技术）故意还没做——当前查询子集写不出 <code>SUM(CASE WHEN p THEN 1 ELSE 0 END)</code>，除非引入一条只服务测试、不服务生产的执行路径。宁可先承认缺口，也不为了凑技术清单造一条假路径。
-</div>
+<div v-click class="callout mt-6">模型检查机制，结果测试检查实现；两者共同缩小错误空间。</div>
 
 </div>
 
 <!--
-"TLA+ 管的是状态机对不对，这九个 oracle 管的是——两条不同的路径算出来的结果，是不是同一个答案。SQLancer 这个思路懂的人应该不少：拿一个谓词，拆成真、假、空三份，加起来必须等于原集合。图查询和 SQL 查询都用这一招；存储层用的是另一种——直接对照一个理想化的模型逐位比对。"
-- "NoREC 那句话是这页的重点：不是忘了做，是宁可先承认做不到，也不为了凑一条技术清单，去写一条只有测试用、生产用不到的假路径。"
+图查询和 SQL 查询都用差分与变形测试。例如 TLP 把谓词为真、为假、为空的结果分开，再检查能否重组原结果。
+存储测试则把操作和恢复后的状态与参考模型对照。只执行一条路径并检查它没有报错，不能替代这些结果约束。
+接下来从引擎内部走到交付：正确代码还要进入正确的构建和发布产物。
 
 [Sources]
 - skein/crates/fuzz/README.md
 -->
 
 ---
+
+<div class="deck-slide-body">
+
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span class="active">03 验证</span><span class="dot">·</span><span>04</span></div>
+
+# 交付中的两个教训
+
+<div class="incident-card">
+  <div class="incident-card__title">① 可选模块要能从干净环境构建</div>
+  <div class="incident-card__body">
+    一个跟 Skein 完全无关的 Bazel target，在全新 checkout 里连"分析"都通不过——因为 <code>MODULE.bazel</code> 无条件注册了私有的 <code>skein_src</code> 本地仓库，Bazel 在依赖裁剪发生之前就要先解析它。
+  </div>
+</div>
+
+<div class="incident-card">
+  <div class="incident-card__title">② 版本来源要一致</div>
+  <div class="incident-card__body">
+    一次发布被拦下：Skein 源码 pin 只在一个 workflow 里更新了，另一个 workflow 里重复的字面量 pin 没跟着更新。发布正确地被拦下，没有坏产物流出去。修复后，发布前检查会核对工作流中的版本与仓库记录，提前发现不一致。
+  </div>
+</div>
+
+</div>
+
+<!--
+第一个问题发生在依赖解析阶段：可选能力即使未启用，也可能影响无关目标的构建。
+第二个问题来自重复记录版本。检查把不一致挡在发布前，减少靠人工记忆同步多个位置的风险。
+这两条分别要求干净环境验证和统一版本校验。最后再看性能测量能支持哪些结论。
+
+[Sources]
+- postmortem/2026-08-28-nmem-server-bazel-skein-bootstrap.md
+- postmortem/2026-08-19-skein-native-gate-pin-drift.md
+-->
+
+---
+
+<div class="deck-slide-body">
+
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span class="active">03 验证</span><span class="dot">·</span><span>04</span></div>
+
+# 本地测量：延迟与内存分别看
+
+<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">以下是具体工作负载的本地对比，不是端到端产品提速或生产指标。</div>
+<div class="stat-row mt-6">
+  <div class="stat"><div class="stat__num">28.37×</div><div class="stat__label">单调追加快路径的 P50 比值<br/>每批 32 行，候选路径与关闭路径对比</div></div>
+  <div class="stat"><div class="stat__num">3.10×</div><div class="stat__label">高出度一跳查询的 P50 比值<br/>844µs → 272µs，LIMIT 50</div></div>
+  <div class="stat"><div class="stat__num">−65%</div><div class="stat__label">流式建索引的峰值 RSS 增量<br/>相对常驻内存路径，10 万文档</div></div>
+</div>
+<div v-click class="mt-6 c2 text-sm leading-relaxed">高出度用例中，游标只展开并返回 50 条关系。提前停止限制了执行器的工作量，但延迟仍会受到图规模影响。</div>
+<div class="mt-4 c3 text-xs">测量日期：追加 2026-08-20；图查询 2026-08-17；建索引 2026-08-06。均为 macOS arm64，后两项使用 Apple M5 Max。</div>
+
+</div>
+
+<!--
+三个数字分别对应追加路径、图查询延迟和建索引内存，不能相加或外推成统一的应用提速。
+追加测试采用 SyncOnCheckpoint 来隔离行访问与约束准备开销，不能据此推算每次提交都 fsync 的收益。图查询数字是本地 spot check 的前后对比；建索引数据来自单次 release 对比。
+图查询在度数 32 和 100,000 时的 P50 分别约为 14.6µs 和 272µs，并不接近。能够说明的是游标和执行器状态有界，不能说明延迟恒定或整库内存恒定。
+
+[Sources]
+- skein/docs/ROW_PAGE_MONOTONIC_APPEND_BENCHMARK.md
+- skein/docs/EXECUTOR_MORSEL_BENCHMARK.md
+- skein/docs/SEARCH_GENERATION_BENCHMARK.md
+-->
+
+---
 layout: center
 class: deck-part-hero
 ---
 
 <div class="text-center deck-section-hero">
 
-<div class="progress-bar mb-8 justify-center"><span>01 Why</span><span class="dot">·</span><span>02 What</span><span class="dot">·</span><span>03 How</span><span class="dot">·</span><span class="active">04 Status</span><span class="dot">·</span><span>05 So What</span></div>
+<div class="progress-bar mb-8 justify-center"><span>01 选型</span><span class="dot">·</span><span>02 引擎</span><span class="dot">·</span><span>03 验证</span><span class="dot">·</span><span class="active">04 灰度</span></div>
 
-<div class="c4 text-sm tracking-widest uppercase mb-4">Part 4</div>
+<div class="c4 text-sm tracking-widest uppercase mb-4">第 4 部分</div>
 
 # 现状
 
 <div class="c3 mt-4 text-lg">
-已接入 Nowledge Mem，开始灰度
+产品集成、灰度路径与后续方向
 </div>
 
 </div>
@@ -919,7 +758,7 @@ class: deck-part-hero
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 Status</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 灰度</span></div>
 
 # 成熟度：已接入 Nowledge Mem
 
@@ -928,7 +767,7 @@ class: deck-part-hero
 </div>
 
 <div class="mt-5 c2 text-lg leading-relaxed">
-Skein 已作为存储引擎接入 Nowledge Mem，正在真实产品中逐步启用。
+从引擎实现进入真实产品使用。
 </div>
 
 </div>
@@ -944,92 +783,29 @@ Skein 已作为存储引擎接入 Nowledge Mem，正在真实产品中逐步启�
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 Status</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 灰度</span></div>
 
-# 不只是设计，也有测得的数字
+# 灰度如何逐步推进
 
-<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-这些是本地基准测试的结果，标注了机器和日期——<strong class="c1">方向性证据，不是生产环境的正式指标</strong>，跟"证明了什么，声称了什么"那页是同一个诚实标准。
+<div class="deck-challenge-lede c2 text-base leading-relaxed mt-3">灰度已开始。切换数据路径时，先保留旧存储作为权威，逐步验证新引擎。</div>
+<div class="rollout-steps rollout-steps--four mt-6">
+  <div class="rollout-step"><div class="rollout-step__title">影子读取</div><div class="rollout-step__desc">新引擎读取并对比结果</div></div>
+  <div class="rollout-step"><div class="rollout-step__title">双写</div><div class="rollout-step__desc">同时写入，旧存储继续服务读取</div></div>
+  <div class="rollout-step"><div class="rollout-step__title">双读验证</div><div class="rollout-step__desc">比较两边的查询结果</div></div>
+  <div class="rollout-step"><div class="rollout-step__title">切换权威</div><div class="rollout-step__desc">导入与验证完成后，显式切换</div></div>
 </div>
-
-<div class="stat-row mt-5">
-  <div class="stat"><div class="stat__num">28.37x</div><div class="stat__label">单调追加快路径（batch=32）<br/>34/34 批次命中，零回退</div></div>
-  <div class="stat"><div class="stat__num">3.1x</div><div class="stat__label">图一跳展开（LIMIT 50）<br/>10 万度节点 P50：844µs → 272µs</div></div>
-  <div class="stat"><div class="stat__num">63.2x</div><div class="stat__label">零拷贝取值<br/>借用 ValueRef vs 拥有 Value 物化</div></div>
-  <div class="stat"><div class="stat__num">2.86x</div><div class="stat__label">流式建索引<br/>峰值内存降低，同时还更快</div></div>
-</div>
-
-<div v-click class="mt-5 c2 text-sm leading-relaxed">
-最喜欢的一条不是速度，是<strong class="c1">形状</strong>：图上一跳查询访问 10 万条边和访问 32 条边，延迟几乎一样（272µs vs 14.6µs，远小于度数 3,000 倍的差距）——因为执行器游标拿到 50 条结果就停，展开报告证明只碰过 50 条关系，不是碰过全部之后再截断。
-</div>
+<div v-click class="callout mt-6">从内容存储开始迁移，逐项检查正确性、资源占用和恢复能力，再扩大使用范围。</div>
 
 </div>
 
 <!--
-"这几个数字特意标了机器型号和日期——不是产品发布指标，是我们自己盯着看的方向性证据。挑四个最有意思的：单调追加那条是发现大部分写入其实是'追加到页尾'这个特殊形状，为它单开一条快路径，34 个符合条件的批次全部命中，零回退；零拷贝那条 63 倍看着夸张，但它衡量的是'要不要多拷贝一份内存'，不是端到端应用查询提速，别混着理解。"
-- "最后一句是这页的重点：一跳查询碰 10 万条边和碰 32 条边，几乎一样快。不是因为压缩了数据，是因为查询知道自己只要 50 条，游标碰到 50 条就退出——正好呼应前面 GraphRAG 那页'跳数上界'不是一句空话。"
+这里展示数据切换的验证路径，不标记已经走到哪一种运行模式。灰度启动不等于全量切换完成。
+当前接入与灰度状态来自讲者更新；运行模式的权威边界来自 bootstrap 约定。内容存储是首个迁移目标，后续切换仍须满足各自的验证条件。
+这页只讲推进原则，不展开构建开关、表名或验收退出码。
 
 [Sources]
-- skein/docs/ROW_PAGE_MONOTONIC_APPEND_BENCHMARK.md（测于 2026-08-20，macOS arm64）
-- skein/docs/EXECUTOR_MORSEL_BENCHMARK.md（测于 2026-08-17 / 2026-08-18，Apple M5 Max）
-- skein/docs/SEARCH_GENERATION_BENCHMARK.md
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 Status</span><span class="dot">·</span><span>05</span></div>
-
-# Nightly 灰度：先隔离发布，再进入运行模式
-
-<div class="release-boundary mt-4">
-  <div class="release-lane release-lane--stable">
-    <div class="release-lane__eyebrow">Stable / 线上</div>
-    <div class="release-lane__title">Skein 不编译进包</div>
-    <div class="release-lane__body">没有实验引擎、没有设置入口，也不会改变现有 Kuzu / LanceDB / SQLite 数据路径。</div>
-  </div>
-  <div class="release-lane release-lane--nightly">
-    <div class="release-lane__eyebrow">Nightly · 灰度中</div>
-    <div class="release-lane__title">专用 Skein Nightly 产物，默认不启动</div>
-    <div class="release-lane__body">当前由受审计的 bootstrap manifest 选择实验模式；Settings → Labs 是正在产品化的后续入口。</div>
-  </div>
-</div>
-
-<div v-click class="rollout-steps rollout-steps--four">
-  <div class="rollout-step">
-    <div class="rollout-step__title">1 · Shadow read</div>
-    <div class="rollout-step__desc">旧存储仍权威；Skein 只读并对比结果</div>
-  </div>
-  <div class="rollout-step">
-    <div class="rollout-step__title">2 · Dual-write</div>
-    <div class="rollout-step__desc">两边同时写；旧存储仍是读路径</div>
-  </div>
-  <div class="rollout-step">
-    <div class="rollout-step__title">3 · Dual-read</div>
-    <div class="rollout-step__desc">两边读并验证；旧存储继续主读</div>
-  </div>
-  <div class="rollout-step rollout-step--active">
-    <div class="rollout-step__title">4 · Skein-only</div>
-    <div class="rollout-step__desc">全量导入、验证和显式授权后，才成为唯一权威</div>
-  </div>
-</div>
-
-<div v-click class="mt-5 callout c2 text-sm leading-relaxed">
-<strong class="c1">当前灰度控制面是 bootstrap manifest；Labs 将把它产品化。</strong>模式选择在启动前写入受审计配置；运行时重新校验数据、投影与权限门槛。<br/>
-<span class="c3">第一个迁移从 SQLite Content Store 开始——5 张表（<code class="text-xs">content_documents</code>、<code class="text-xs">thread_messages</code>、<code class="text-xs">content_chunks</code>、<code class="text-xs">content_anchors</code>、<code class="text-xs">content_migration_state</code>），落地为 Skein 内置的 PostgreSQL 方言关系存储——完全嵌入，不依赖任何 PostgreSQL 服务端或客户端库；图与向量在各自验证完成前不越过权威边界。</span>
-</div>
-
-</div>
-
-<!--
-"先看上面：Stable 与 Nightly rehearsal 的边界是构建边界，而不是一个运行时 if。线上包完全不带实验引擎；专用 Nightly 产物默认关闭，由 bootstrap manifest 显式启动。"
-- "Labs 不是一个让用户随手换数据库的普通设置；它是正在产品化的实验控制面。当前先由 manifest 驱动：Shadow、Dual-write、Dual-read；Skein-only 仍受全量导入、结果验证和明确授权约束。"
-- "四个名字对应运行时真实的权威边界：前三种模式都以旧存储为权威，只有 Skein-only 才会切换权威。"
-- "SQLite Content Store 是第一个迁移目标，不是随便选的——5 张表覆盖了 Mem App 内容存储 schema v4 的全部范围，替代方案是 Skein 自带的 PostgreSQL 方言关系层，进程内嵌入，不需要额外起一个 PostgreSQL 实例。"
-
-[Sources]
-- Mem server, `nmem-rs/crates/nmem-server/Cargo.toml` and `src/skein_runtime.rs` (feature and runtime-mode boundaries)
+- 讲者状态更新（2026-09-05）：已接入 Nowledge Mem，已开始灰度。
+- docs/implementation/SKEIN_EMBEDDED_BOOTSTRAP.md
 - skein/docs/specs/POSTGRES_RELATIONAL_CONTENT_STORE_SPEC.md
 -->
 
@@ -1037,376 +813,26 @@ Skein 已作为存储引擎接入 Nowledge Mem，正在真实产品中逐步启�
 
 <div class="deck-slide-body">
 
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 Status</span><span class="dot">·</span><span>05</span></div>
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 灰度</span></div>
 
-# "受控灰度"不是一个开关，是 11 个独立就绪域
+# 未来展望
 
-<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-上一页的四个阶段背后，是一份 schema 校验过的 JSON 就绪计划——不是一个人手动跑的脚本。每个域独立回答"我这部分能不能上"，而不是一个全局布尔值。
-</div>
-
-<div class="tla-cloud mt-4">
-  <span class="tla-tag">graph</span>
-  <span class="tla-tag">query</span>
-  <span class="tla-tag">query_family</span>
-  <span class="tla-tag">graph_route</span>
-  <span class="tla-tag">search_route_ownership</span>
-  <span class="tla-tag">storage</span>
-  <span class="tla-tag">search_projection</span>
-  <span class="tla-tag">search_projection_shadow</span>
-  <span class="tla-tag">search_candidate_shadow</span>
-  <span class="tla-tag">workload_fixture</span>
-  <span class="tla-tag">background</span>
-</div>
-
-<div v-click class="mt-5 grid grid-cols-2 gap-x-8 gap-y-3 text-sm leading-relaxed">
-  <div>
-    <div class="c1 font-semibold mb-1">退出码是三态，不是布尔</div>
-    <div class="c2"><code>0</code> 就绪 · <code>1</code> 完成但被阻塞 · <code>2</code> 执行失败——"被阻塞"是一个明确、可区分的结果，不是笼统的"没通过"。</div>
-  </div>
-  <div>
-    <div class="c1 font-semibold mb-1">两档内存上限，不是一台跑分机的配置</div>
-    <div class="c2"><code>desktop_bound_8_gib</code>（动态调度，实际常在 1-2 GiB）与 <code>capability_512_mib</code>（硬上限）——两档都要过。</div>
-  </div>
-</div>
-
-<div v-click class="callout mt-4 text-sm">
-留存的证据只存<strong class="c1">查询和参数的摘要</strong>，不存查询原文或结果行——就绪证明本身也要对隐私负责。
+<div class="mt-6 grid grid-cols-2 gap-x-10 gap-y-8">
+  <div v-click><div class="c1 font-semibold mb-3">01 开源</div><div class="c2 text-base leading-relaxed">开放引擎代码，支持社区参与和共建。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">02 移动端适配</div><div class="c2 text-base leading-relaxed">让引擎在手机等移动设备上运行。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">03 更多 PostgreSQL 特性</div><div class="c2 text-base leading-relaxed">逐步扩展对 PostgreSQL 语法和功能的支持。</div></div>
+  <div v-click><div class="c1 font-semibold mb-3">04 资源控制与功能裁剪</div><div class="c2 text-base leading-relaxed">从手机端到服务器，按资源预算控制开销，按使用场景裁剪功能。</div></div>
 </div>
 
 </div>
 
 <!--
-"上一页的 shadow / dual-write / dual-read / Skein-only，看起来像一个进度条。背后其实是 11 个互相独立的域，每一个都要单独回答'我这部分好了没'——图存储好了，不代表搜索投影好了，也不代表后台任务调度好了。"
-- "退出码那条很喜欢：1 不是失败，是'做完了，但有已知阻塞'。这个区分本身就是诚实设计的一部分。"
-- "两档内存上限也是故意的——8GB 那档是真实桌面机器的动态调度，512MB 那档是专门验证'低内存也能跑'的能力证明，不是同一件事的两种措辞。"
+未来主要沿四个方向推进：开源、移动端适配、支持更多 PostgreSQL 特性，以及更好的资源控制与功能裁剪。
+移动端适配关注平台支持；资源控制与功能裁剪则贯穿手机端到服务器，让同一个引擎适应不同的资源预算和使用场景。
+方向介绍到这里，接下来进入提问和交流。
 
 [Sources]
-- skein/docs/PRODUCTION_GRAPH_STORAGE_QUALIFICATION.md and sibling PRODUCTION_*_QUALIFICATION.md docs
-- skein/crates/readiness/src/lib.rs
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 Status</span><span class="dot">·</span><span>05</span></div>
-
-# 两个真实的教训
-
-<div class="incident-card">
-  <div class="incident-card__title">① 把一样东西排除在构建之外，可能比包含进来还难</div>
-  <div class="incident-card__body">
-    一个跟 Skein 完全无关的 Bazel target，在全新 checkout 里连"分析"都通不过——因为 <code>MODULE.bazel</code> 无条件注册了私有的 <code>skein_src</code> 本地仓库，Bazel 在依赖裁剪发生之前就要先解析它。
-  </div>
-</div>
-
-<div class="incident-card">
-  <div class="incident-card__title">② 同一个事实，写在两个地方，一个会忘记更新</div>
-  <div class="incident-card__body">
-    一次发布被拦下：Skein 源码 pin 只在一个 workflow 里更新了，另一个 workflow 里重复的字面量 pin 没跟着更新。发布正确地被拦下，没有坏产物流出去。修复后 preflight 会交叉核对每个 workflow 的 pin 和根 gitlink——几天后下一次 pin bump，在分配 runner 之前就被自动拦住了。
-  </div>
-</div>
-
-</div>
-
-<!--
-"这两个故事想传达同一件事：把一个新的存储引擎，以 git submodule 的方式先'藏在'仓库里但先不让它进生产构建，这件事本身的工程复杂度，不比让它进生产简单。"
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span class="active">04 Status</span><span class="dot">·</span><span>05</span></div>
-
-# 接下来两件事
-
-<div class="callout mt-3 c2 text-sm">
-诚实标注：这两条现在都<strong class="c1">不在</strong> <code>skein/TODO.md</code> 里——是方向判断，不是已经立项的计划。放在这儿，是想现场听反馈。
-</div>
-
-<div class="deck-split mt-4">
-
-<div v-click>
-  <div class="flex gap-3">
-    <div class="num">1</div>
-    <div>
-      <div class="c1 font-semibold">Agent trace 也是记忆的一部分</div>
-      <div class="c2 text-sm mt-1 leading-relaxed">
-        今天 Skein 统一的是图、向量、关系型内容。<br/>
-        Agent 的执行轨迹——工具调用、会话历史——本质上也是同一种知识，不该活在一条单独的日志管道里，而应该被同一个引擎管理、检索、演化。
-      </div>
-    </div>
-  </div>
-</div>
-
-<div v-click>
-  <div class="flex gap-3">
-    <div class="num">2</div>
-    <div>
-      <div class="c1 font-semibold">Agent 直接查库，靠 branch 隔离</div>
-      <div class="c2 text-sm mt-1 leading-relaxed">
-        今天 Agent 只能走 GraphRAG 安全查询路径：LLM 起草只读 Cypher，Skein 校验后执行。<br/>
-        想让 Agent 能更直接地读写，同时给每个 Agent 一份像 git branch 一样<strong class="c1">可丢弃、可合并</strong>的隔离副本——探索性读写不污染主线。<br/>
-        <span class="c3">现有的 MVCC 快照隔离（<code>SkeinConcurrentSnapshots</code>）解决的是事务读一致性，不是"可写、可丢弃的分支"——这是两回事，也是这条要补的差距。</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-</div>
-
-</div>
-
-<!--
-"这一页跟前面不一样——前面讲的都是已经存在的东西，无论是已验证还是设计阶段。这两条是我自己的方向判断，仓库里的 TODO 里还没有。故意讲清楚这一点，是不想让大家觉得我在偷偷把愿景包装成路线图。"
--->
-
----
-layout: center
-class: deck-part-hero
----
-
-<div class="text-center deck-section-hero">
-
-<div class="progress-bar mb-8 justify-center"><span>01 Why</span><span class="dot">·</span><span>02 What</span><span class="dot">·</span><span>03 How</span><span class="dot">·</span><span>04 Status</span><span class="dot">·</span><span class="active">05 So What</span></div>
-
-<div class="c4 text-sm tracking-widest uppercase mb-4">Part 5</div>
-
-# 为什么这跟 Python 开发者有关系
-
-<div class="c3 mt-4 text-lg">
-诚实地说清楚：现在没有，将来可能有
-</div>
-
-</div>
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span class="active">05 So What</span></div>
-
-# 先说清楚：Skein 现在没有 Python binding
-
-<div class="mt-6 deck-pill-row">
-  <span class="pill pill-muted">没有 pyo3</span>
-  <span class="pill pill-muted">没有 maturin</span>
-  <span class="pill pill-muted">没有 .pyi</span>
-</div>
-
-<div v-click class="mt-6 c2 text-base leading-loose">
-这不是一个"能 <code>import skein</code>"的库——至少现在不是。<br/>
-<span class="c3">如果今天的重点是"给 Python 用的 API"，这场分享到这里其实就该结束了。</span>
-</div>
-
-</div>
-
-<!--
-"我想先把这句话说完，再讲为什么还值得你们花时间听下去。"
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span class="active">05 So What</span></div>
-
-# 但这是一个"Python 系统被 Rust 重写"的真实故事
-
-<div class="deck-split">
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">上一代后端，就是 Python</div>
-  <div class="c2 text-sm leading-relaxed">
-    Nowledge Mem 早期的后端是 Python（<code>nowledge-graph-py</code>），今天它是迁移参考，不再是产品运行时。
-  </div>
-</div>
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">现在的主干是 Rust</div>
-  <div class="c2 text-sm leading-relaxed">
-    存储层、AI Agent 记忆层，从 Python 迁到 Rust——为了嵌入性、正确性、性能。<br/>
-    Skein 是这条迁移路上，当前最深的一层。
-  </div>
-</div>
-
-</div>
-
-</div>
-
-<!--
-"很多在座的可能也在用 Python 搭 AI Agent 系统的存储/检索层。我们走过的这条路——从 Python 原型到 Rust 存储引擎——大概率不只是我们一家会走。"
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span class="active">05 So What</span></div>
-
-# 嵌入式数据库这个模式，Python 生态最熟
-
-<div class="deck-split">
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">SQLite · DuckDB · LanceDB</div>
-  <div class="c2 text-sm leading-relaxed">
-    都是"链接进程"的库，不是要另外运维的服务。<br/>
-    Python 开发者每天在用这个模式构建 AI 工具：本地向量库、本地 Agent 状态、本地缓存。
-  </div>
-</div>
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">Skein 想做同一件事，但目标不同</div>
-  <div class="c2 text-sm leading-relaxed">
-    不是通用关系表，也不是纯向量表，而是<strong class="c1">图状的、给 AI Agent 用的记忆</strong>。<br/>
-    面向的是构建 Python AI 工具链的<strong class="c1">系统 / 基础设施工程师</strong>，不是"直接 <code>import skein</code>"的应用开发者——至少现在不是。
-  </div>
-</div>
-
-</div>
-
-</div>
-
-<!--
-"这句话想留给大家：你们已经很熟悉'嵌入式数据库'这个形态了，只是习惯了它是关系表或者向量表。我们在赌的是——图状记忆，也值得有一个自己的 SQLite。"
--->
-
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span class="active">Recap</span></div>
-
-# Recap
-
-<div class="mt-8 grid grid-cols-3 gap-12">
-
-<div>
-  <div class="c4 text-sm font-mono mb-3">01</div>
-  <div class="c1 font-semibold text-base">为什么</div>
-  <div class="c3 text-sm mt-2 leading-relaxed">三个数据库，一份记忆，协调的代价谁来付</div>
-</div>
-
-<div>
-  <div class="c4 text-sm font-mono mb-3">02</div>
-  <div class="c1 font-semibold text-base">是什么</div>
-  <div class="c3 text-sm mt-2 leading-relaxed">嵌入式引擎，一套计划 / 优化器，两种查询语言，一条给 LLM 的安全查询路径</div>
-</div>
-
-<div>
-  <div class="c4 text-sm font-mono mb-3">03</div>
-  <div class="c1 font-semibold text-base">怎么保证正确</div>
-  <div class="c3 text-sm mt-2 leading-relaxed">先建模再编码，诚实标注验证边界，两个真实的工程教训</div>
-</div>
-
-</div>
-
-</div>
-
-<!--
-[15 秒快速过] 手势扫三列，不逐字念。"接下来是三句我自己的判断。"
--->
-
----
-layout: two-cols
----
-
-<div class="deck-slide-body">
-
-<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span>02</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span class="active">Thoughts</span></div>
-
-# Thoughts
-
-<div class="deck-thesis-stack">
-
-<div v-click class="deck-thesis-row">
-  <div class="num">A</div>
-  <div>
-    <div class="c1 font-semibold">统一之后才看得见收益</div>
-    <div class="c2 text-sm mt-1 leading-relaxed">分别优化三个系统，永远追不上一个共享 WAL 带来的正确性收益——这个收益在拆开的架构里根本无法被观测到。</div>
-  </div>
-</div>
-
-<div v-click class="deck-thesis-row">
-  <div class="num">B</div>
-  <div>
-    <div class="c1 font-semibold">形式化方法是护栏，不是营销</div>
-    <div class="c2 text-sm mt-1 leading-relaxed">64 个 TLA+ 规格、9 个 fuzz oracle 听起来很唬人，但真正有价值的是那句"NoREC 我们故意还没做"——愿意公开讲边界，比讲覆盖率数字更重要。</div>
-  </div>
-</div>
-
-<div v-click class="deck-thesis-row">
-  <div class="num">C</div>
-  <div>
-    <div class="c1 font-semibold">嵌入式，是给 AI Agent 时代的答案</div>
-    <div class="c2 text-sm mt-1 leading-relaxed">离线、进程内、按需付费的架构，可能比"再运维一个数据库服务"更贴近这个时代的负载形态。</div>
-  </div>
-</div>
-
-</div>
-
-</div>
-
-::right::
-
-<div class="deck-recap-links">
-
-<header class="deck-recap-links__head">
-  <div class="deck-recap-links__toprow flex flex-wrap items-center gap-x-3 gap-y-2 w-full min-w-0" aria-label="Nowledge Labs · Nowledge Mem">
-    <div class="deck-recap-links__brandmarks flex flex-wrap items-center gap-x-2">
-      <img src="./images/nowledge-labs-icon.png" alt="Nowledge Labs" class="cover-foot__logo cover-foot__logo--labs deck-recap-links__mark" />
-      <span class="cover-foot__rule deck-recap-links__rule" aria-hidden="true"></span>
-      <img src="./images/nowledge-mem-logo.webp" alt="Nowledge Mem" class="cover-foot__logo cover-foot__logo--mem deck-recap-links__mark" />
-    </div>
-  </div>
-  <p class="deck-recap-links__kicker c4 text-[0.72rem] mt-1.5 tracking-[0.14em] uppercase">Nowledge Labs · Nowledge Mem</p>
-</header>
-
-<nav class="deck-recap-links__nav deck-recap-links__nav--org" aria-label="Nowledge links">
-  <a class="deck-recap-links__item" href="https://www.nowledge-labs.ai/blog" target="_blank" rel="noopener noreferrer">
-    <span class="deck-recap-links__icon c4" aria-hidden="true"><ph-article class="deck-recap-links__ph" /></span>
-    <span class="deck-recap-links__body min-w-0">
-      <span class="deck-recap-links__label c1">Labs blog</span>
-      <span class="deck-recap-links__url c3 text-xs truncate">nowledge-labs.ai/blog</span>
-    </span>
-  </a>
-  <a class="deck-recap-links__item" href="https://mem.nowledge.co/" target="_blank" rel="noopener noreferrer">
-    <span class="deck-recap-links__icon c4" aria-hidden="true"><ph-globe class="deck-recap-links__ph" /></span>
-    <span class="deck-recap-links__body min-w-0">
-      <span class="deck-recap-links__label c1">Nowledge Mem</span>
-      <span class="deck-recap-links__url c3 text-xs truncate">mem.nowledge.co</span>
-    </span>
-  </a>
-  <a class="deck-recap-links__item" href="https://github.com/nowledge-co/community/" target="_blank" rel="noopener noreferrer">
-    <span class="deck-recap-links__icon c4" aria-hidden="true"><ph-github-logo class="deck-recap-links__ph" /></span>
-    <span class="deck-recap-links__body min-w-0">
-      <span class="deck-recap-links__label c1">Community</span>
-      <span class="deck-recap-links__url c3 text-xs truncate">github.com/nowledge-co/community</span>
-    </span>
-  </a>
-</nav>
-
-<div class="deck-recap-links__sep" role="presentation"></div>
-
-<p class="deck-recap-links__group-label c4 text-[0.65rem] uppercase tracking-[0.16em] mb-1.5">Speaker · Weizhen Wang</p>
-
-<nav class="deck-recap-links__nav deck-recap-links__nav--person" aria-label="Speaker links">
-  <a class="deck-recap-links__item" href="https://github.com/hawkingrei" target="_blank" rel="noopener noreferrer">
-    <span class="deck-recap-links__icon c4" aria-hidden="true"><ph-github-logo class="deck-recap-links__ph" /></span>
-    <span class="deck-recap-links__body min-w-0">
-      <span class="deck-recap-links__label c1">GitHub</span>
-      <span class="deck-recap-links__url c3 text-xs truncate">github.com/hawkingrei</span>
-    </span>
-  </a>
-</nav>
-
-</div>
-
-<!--
-"三句判断念完，停一下。下一页谢幕。"
+- 讲者方向更新（2026-09-05）。
 -->
 
 ---
@@ -1420,7 +846,7 @@ layout: two-cols
 #### Weizhen Wang @ Nowledge Labs
 
 <div class="deck-closing-quote">
-Skein 已接入 Nowledge Mem，开始灰度。把三个数据库合并成一个嵌入式引擎，正在真实产品中逐步落地。
+欢迎交流图存储、检索与嵌入式数据库的工程实践。
 </div>
 
 </div>
@@ -1481,6 +907,5 @@ Skein 已接入 Nowledge Mem，开始灰度。把三个数据库合并成一个�
 </div>
 
 <!--
-收尾：
-"存储引擎这种东西，通常是悄悄换掉的，没人会为它鼓掌。但我们觉得，怎么把三个数据库合并成一个、怎么证明它是对的、中间踩了什么坑——这件事本身值得现在就拿出来分享，而不是等它进了 GA 才讲。谢谢大家。"
+谢谢大家，欢迎提问。
 -->
