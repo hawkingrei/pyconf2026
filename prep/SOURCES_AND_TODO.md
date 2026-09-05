@@ -29,8 +29,14 @@ preparation, not files vendored into this presentation repository.
 
 SQLite comparison references were checked against the official documentation:
 [deployment uses](https://www.sqlite.org/whentouse.html),
-[recursive queries](https://www.sqlite.org/lang_with.html), and
-[FTS5](https://www.sqlite.org/fts5.html).
+[recursive queries](https://www.sqlite.org/lang_with.html),
+[FTS5](https://www.sqlite.org/fts5.html), and
+[loadable extensions](https://www.sqlite.org/loadext.html).
+Transactions and recursive CTEs are native capabilities. FTS5 is an official
+extension supplied with SQLite sources, enabled at build time or loaded
+separately; availability depends on the distribution's build configuration.
+Vector retrieval can use a third-party extension such as
+[sqlite-vec](https://github.com/asg017/sqlite-vec), requiring separate integration.
 The comparison describes Mem's integration needs rather than ranking database
 products or claiming that graph traversal is impossible in SQLite.
 

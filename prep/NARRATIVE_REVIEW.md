@@ -25,7 +25,7 @@ repeat the detailed explanations. A single closing slide holds the links.
 | 2 | 2 | Align the agenda with four parts and the actual order of evidence. |
 | 3 | 3 | Keep the problem-section divider; shorten the transition. |
 | 4 | 4 | Explain only the old storage roles and their application-level coordination. |
-| 5 | 5 | Compare SQLite's relevant capabilities with Mem's remaining integration needs; stop repeating all three store descriptions. |
+| 5 | 5 | Label native SQL, official FTS5, and third-party vector extensions separately, then explain Mem's remaining integration work. |
 | 6 | 6 | Explain concrete write, update, read, and recovery costs; distinguish graph facts from derived search indexes. |
 | 7 | 8, 9 | Merge deployment and engine requirements into the architecture and deployment pages. |
 | 8 | 7 | Keep the engine-section divider. |

@@ -192,11 +192,12 @@ Nowledge Mem 的每一条记忆，同时要满足三种访问模式：<br/>
 <div class="deck-challenge-lede c2 text-base leading-relaxed mt-3">SQLite 能承载内容和事务。我们的取舍在于：图遍历、检索和它们的生命周期，要由谁来组织。</div>
 <div class="deck-split mt-6">
   <div v-click>
-    <div class="c1 font-semibold mb-3">SQLite 已有的能力</div>
+    <div class="c1 font-semibold mb-3">SQLite 的能力来源</div>
     <div class="c2 text-sm leading-relaxed space-y-3">
-      <div>进程内嵌入、关系数据和事务。</div>
-      <div>FTS5 提供词法全文检索。</div>
-      <div>节点表、边表配合递归查询，可以表达图遍历。</div>
+      <div><span class="pill text-xs">原生</span> 进程内嵌入、关系数据和事务。</div>
+      <div><span class="pill text-xs">原生 SQL</span> 递归 CTE 可表达遍历；节点表、边表由应用建模。</div>
+      <div><span class="pill pill-accent text-xs">官方扩展</span> FTS5 全文检索，需编译启用或单独加载。</div>
+      <div><span class="pill pill-accent text-xs">第三方扩展</span> 向量检索可接入 sqlite-vec，需额外集成。</div>
     </div>
   </div>
   <div v-click>
@@ -213,7 +214,9 @@ Nowledge Mem 的每一条记忆，同时要满足三种访问模式：<br/>
 </div>
 
 <!--
-SQLite 的事务、全文检索和递归查询都可以复用。对 Mem 而言，继续组合意味着应用还要维护图查询、向量召回以及它们和原始内容之间的约定。
+SQLite 的事务与递归 CTE 属于原生能力；应用可用节点表、边表和递归查询表达图遍历。
+FTS5 是随 SQLite 源码提供的官方扩展，可编译启用，也可作为可加载扩展集成。发行包是否已启用取决于构建配置，不能一概写成开箱可用或必须另外安装。
+向量检索可通过 sqlite-vec 等第三方扩展接入。对 Mem 而言，应用还要维护图查询、向量召回以及它们和原始内容之间的约定。
 这是一项围绕具体负载的取舍，不是对 SQLite 的通用能力排名。
 接下来用一次写入和一次读取，说明这些协调工作出现在哪里。
 
@@ -221,6 +224,8 @@ SQLite 的事务、全文检索和递归查询都可以复用。对 Mem 而言�
 - https://www.sqlite.org/whentouse.html
 - https://www.sqlite.org/lang_with.html
 - https://www.sqlite.org/fts5.html
+- https://www.sqlite.org/loadext.html
+- https://github.com/asg017/sqlite-vec
 - skein/docs/ARCHITECTURE.md
 -->
 
