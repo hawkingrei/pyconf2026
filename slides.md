@@ -508,44 +508,43 @@ SQL 侧对标 PostgreSQL master（<code class="text-xs">3d00537f</code>）的方
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
 
-# 优化器怎么选计划：穷举，但有退路
+# Optimizer workflow
 
 <div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
-前一页图里"Cascades 优化器"那个方框，展开是两件具体的事：<strong class="c1">JOIN 顺序怎么找到最优解</strong>，以及<strong class="c1">候选执行方式怎么筛</strong>。
+The optimizer turns a shared logical plan into a physical plan, choosing how to execute the query while preserving its meaning.
 </div>
 
-<div class="deck-split mt-4">
-
-<div v-click>
-  <div class="c1 font-semibold mb-2">连通子图枚举，不是贪心拼接</div>
-  <div class="c2 text-sm leading-relaxed">
-    多表 JOIN 顺序用 <strong class="c1">csg-cmp 超图枚举</strong>：把 JOIN 图当超图，枚举每一个连通子图和它的补图配对，保证在这个搜索空间里找到的就是代价最优解——不是"先拼两张表，再贪心接下一张"。<br/>
-    <span class="c3">n 张表需要 2ⁿ−1 个 memo group；预算上限 4,095，也就是穷举最优覆盖到 12 表 JOIN。超过这个规模不会卡死或爆内存，直接切换到一条确定性的 direct-fallback 计划——退化是显式状态，不是隐性变慢。</span>
-  </div>
+<div class="pipe-row mt-6" aria-label="Logical plan, rule rewrites, candidate plans, cost comparison, physical plan">
+  <div class="pipe-box">Logical plan<span class="pipe-box__sub">What to compute</span></div>
+  <div class="pipe-arrow" aria-hidden="true">→</div>
+  <div class="pipe-box pipe-box--core">Rule rewrites<span class="pipe-box__sub">Simplify the plan</span></div>
+  <div class="pipe-arrow" aria-hidden="true">→</div>
+  <div class="pipe-box pipe-box--core">Candidate plans<span class="pipe-box__sub">Explore alternatives</span></div>
+  <div class="pipe-arrow" aria-hidden="true">→</div>
+  <div class="pipe-box pipe-box--core">Cost comparison<span class="pipe-box__sub">Compare estimates</span></div>
+  <div class="pipe-arrow" aria-hidden="true">→</div>
+  <div class="pipe-box">Physical plan<span class="pipe-box__sub">How to execute</span></div>
 </div>
 
-<div v-click>
-  <div class="c1 font-semibold mb-2">候选先过 Pareto 前沿，再比代价</div>
-  <div class="c2 text-sm leading-relaxed">
-    索引点查、组合范围扫描、精确值 union lookup、向量种子、全表扫描——这些候选访问路径先做 <strong class="c1">skyline 剪枝</strong>：被另一个候选在所有维度上都不占优的直接淘汰，剩下的 Pareto 前沿才进入最终代价比较。<br/>
-    <span class="c3">JOIN 搜索之前还有一层启发式重写流水线（Once / TopDown / BottomUp / FixedPoint 四种应用顺序），先把逻辑计划收敛，再交给代价搜索——避免代价模型在明显能化简的表达式上白费搜索预算。</span>
-  </div>
-</div>
-
+<div class="mt-6 c2 text-sm leading-relaxed space-y-3">
+  <div v-click><strong class="c1">Rewrite:</strong> apply rules that simplify the logical plan without changing the result.</div>
+  <div v-click><strong class="c1">Explore and compare:</strong> consider join orders and data access paths, then compare their estimated costs.</div>
+  <div v-click><strong class="c1">Select:</strong> produce a physical plan for the executor.</div>
 </div>
 
 </div>
 
 <!--
-"这页拆开讲优化器内部真正在做的两件事。JOIN 顺序那块是经典的连通子图/补图对枚举算法——学界叫 csg-cmp，DuckDB 这类现代分析引擎也在用同一套思路：保证的是搜索空间内的最优解，不是启发式近似。"
-- "但穷举是有代价的：n 张表要 2ⁿ−1 个 memo group，我们设了 4,095 的硬预算，也就是 12 表以内保证最优。超过之后不是让你等到天荒地老，是直接切一条确定性的备用计划——这是我们自己选择的降级策略，不是意外行为。"
-- "右边这条经常被忽略：选执行方式不是每个候选都算一遍代价再排序，是先用 skyline 做一轮 Pareto 剪枝——如果一个候选在所有维度都不如另一个，直接出局，省下后面代价模型的开销。"
+- Cypher and SQL arrive at the same logical plan, which describes what the query should compute.
+- Rules first simplify that plan while preserving the query's meaning.
+- The optimizer explores execution alternatives, such as join orders and ways to read the data, and compares their estimated costs.
+- The selected physical plan tells the executor how to run the query. Cost estimates guide this choice; they do not guarantee the fastest runtime.
 
 [Sources]
-- skein/crates/optimizer/src/relational_join_hypergraph.rs
-- skein/crates/optimizer/src/relational_join.rs (memo group budget = 4,095, direct-fallback error path)
-- skein/crates/optimizer/src/relational.rs (skyline_prune_relational_access_paths)
-- skein/crates/optimizer/src/stage.rs (staged rule pipeline, ApplyOrder)
+- skein/docs/ARCHITECTURE.md (shared query pipeline)
+- skein/crates/optimizer/src/stage.rs (rule rewrites)
+- skein/crates/optimizer/src/relational_join.rs (join planning)
+- skein/crates/optimizer/src/relational.rs (access-path selection)
 -->
 
 ---

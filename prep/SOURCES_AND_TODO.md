@@ -81,35 +81,18 @@ an on-slide banner stating plainly that neither item is in `skein/TODO.md`
 yet. If `skein/TODO.md` or a design doc is updated to actually adopt these
 as roadmap items before the talk, tighten this slide's wording accordingly.
 
-### Optimizer deep-dive slide added (2026-09-05)
+### Optimizer workflow slide simplified (2026-09-05)
 
-Per the user's request to say more about the optimizer specifically (the
-"Cascades 优化器" pipe-box on the query-flow slide had no detail behind it).
-Read `skein/crates/optimizer/src/` directly rather than relying on the
-crate-grid's one-line description. Two verified, specific algorithmic facts:
+The optimizer slide presents the overall flow requested by the user:
+shared logical plan → rule rewrites → candidate plans → estimated-cost
+comparison → physical plan for the executor. Join orders and data access
+paths serve only as brief examples of execution alternatives.
 
-- **Join-order search**: `relational_join_hypergraph.rs` implements csg-cmp
-  (connected-subgraph/complement-pair) hypergraph enumeration — optimal join
-  order within the search space, not greedy left-deep construction. The
-  memo-group budget is a hard `4_095` (`relational_join.rs:153`), and
-  `required_groups = 2^n − 1` (`relational_join.rs:418-421`) is checked
-  against it before enumeration starts — so exhaustive-optimal is guaranteed
-  up to 12-relation joins; beyond that, `GroupBudgetExceeded` triggers a
-  deterministic `direct_fallback` (`search.rs:81`), not a stall or OOM.
-- **Access-path selection**: `relational.rs::skyline_prune_relational_access_paths`
-  retains only the Pareto frontier of access-path candidates (index seek,
-  composite range seek, exact-union lookup, vector seed, full scan) before
-  final cost comparison — a `dominates()` check, not a single-scalar sort.
-  `stage.rs`'s `ApplyOrder` (Once/TopDown/BottomUp/FixedPoint) confirms a
-  staged heuristic-rewrite pipeline runs before the cost-based join search,
-  Calcite-HepPlanner-style.
-
-The "csg-cmp" name and the 2ⁿ−1 group-count relationship are read directly
-from source (doc comment + the literal `1usize.checked_shl(...)`
-computation), not inferred. Did not claim lineage to a specific academic
-paper (Moerkotte & Neumann's DPccp is the well-known algorithm family this
-matches) since the code itself doesn't cite one — described the mechanism,
-not the attribution.
+The slide and speaker notes omit enumeration algorithms, search-budget
+numbers, pruning mechanisms, and rule-application modes. Cost estimates
+guide plan selection; the slide makes no optimal-runtime guarantee.
+Source references remain in the speaker notes: `skein/docs/ARCHITECTURE.md`
+and `skein/crates/optimizer/src/{stage,relational_join,relational}.rs`.
 
 ### CRDT / multi-device sync slides removed (2026-09-05)
 
