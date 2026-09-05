@@ -12,7 +12,7 @@ repeat the detailed explanations. A single closing slide holds the links.
 
 1. Storage choices: existing roles, the SQLite tradeoff, coordination costs.
 2. Engine design: responsibilities, deployment, query flow, optimization,
-   execution, concurrency, retrieval, and generated-query validation.
+   execution, concurrency, retrieval, and AI interaction through MCP and branches.
 3. Verification and delivery: state models, result comparisons, delivery
    incidents, and workload-specific measurements.
 4. Rollout: current integration, the validation path, and future directions.
@@ -37,7 +37,7 @@ repeat the detailed explanations. A single closing slide holds the links.
 | 14 | 13 | Keep execution parallelism and transaction coordination distinct; remove the repeated snapshot callout. |
 | 15 | 8 | Merge the module inventory into the grouped architecture map. |
 | 16 | 14 | Explain keyword versus semantic retrieval, with one authoritative explanation of index rebuildability. |
-| 17 | 15 | Explain the bounded schema and pre-execution checks; remove inflated comparisons and repeated setup. |
+| 17 | 15 | Follow the presenter's AI-native framing: AI authors and runs queries through MCP, with branches for independent task exploration. Remove the schema-validation implementation details. |
 | 18 | 16 | Broaden the section title to cover verification and delivery, including performance measurement. |
 | 19 | 17 | Replace model counts and the unrelated cross-store statistic with commit, snapshot, and reclamation scenarios. |
 | 20 | 18 | Present plan, expression, and state comparisons; remove the oracle inventory and repeated gap discussion. |

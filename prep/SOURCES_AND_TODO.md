@@ -21,7 +21,7 @@ preparation, not files vendored into this presentation repository.
 | Parallel work | `skein/crates/runtime-tokio/src/lib.rs`, `skein/crates/executor/src/{concurrent,morsel}.rs`, `skein/src/executor/columnar.rs` | Runtime admission and shared workers apply to eligible execution paths. |
 | Transactions | `skein/src/api/concurrent.rs`, `skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md` | Pinned snapshots, private changes, conflict coordination, serialized durable commit/publication; one process shares one root per database path. |
 | Retrieval | `skein/docs/ARCHITECTURE.md`, `skein/docs/specs/EMBEDDED_RUNTIME_SPEC.md` | Full-text and vector retrieval are complementary entries; no automatic hybrid-ranking claim. |
-| Generated queries | `skein/docs/ARCHITECTURE.md`, `skein/crates/core/src/graph_rag/fingerprint.rs` | A bounded schema context, read-only parameterized queries, and schema-fingerprint checks. |
+| AI-facing integration | Presenter update, 2026-09-05 | AI authors queries and invokes the database through MCP; branches support independent exploration. Specific branch write/merge semantics are not asserted. |
 | Formal models | `skein/docs/tla/`, `skein/AGENTS.md` | Model checking concerns the modeled state space, not proof of all implementation behavior. |
 | Differential and metamorphic tests | `skein/crates/fuzz/README.md` | Compare plans, equivalent expressions, and storage states; omit the detailed oracle inventory. |
 | Delivery incidents | `postmortem/2026-08-28-nmem-server-bazel-skein-bootstrap.md`, `postmortem/2026-08-19-skein-native-gate-pin-drift.md` | Dependency admission and version consistency are distinct delivery lessons. |
@@ -61,6 +61,12 @@ latency or constant whole-database memory.
 On 2026-09-05, the presenter reported that Skein is integrated into Nowledge Mem
 and gradual rollout has started. Slide 22 states this update. It is not an
 independently inspected deployment result or a claim that full rollout is done.
+
+The presenter described MCP query access and branch support for the AI-native
+database narrative on slide 15. The slide uses independent task exploration
+to explain the purpose of branches. This is presenter-provided capability
+context, not independent implementation verification of an MCP server or
+branch lifecycle APIs.
 
 The presenter also specified four future directions on 2026-09-05: open
 source, mobile support, more PostgreSQL features, and better resource control

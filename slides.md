@@ -549,57 +549,40 @@ SQL/PGQ 在 SQL 中嵌入图查询，不需要先生成 Cypher 文本。这里�
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 引擎</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span></div>
 
-# LLM 起草查询，执行前校验
+# AI 原生数据库
 
-<div class="deck-split">
+<div class="deck-challenge-lede c2 text-base leading-relaxed mt-3">让 AI 直接使用数据库，自主查询，并在独立分支中探索。</div>
 
-<div>
-<div v-click class="deck-challenge-lede c2 text-base leading-loose">
-LLM 根据受限的 schema 视图起草查询，Skein 在执行前检查查询约束。
+<div v-click class="pipe-row mt-6">
+  <div class="pipe-box pipe-box--surface">AI Agent<span class="pipe-box__sub">编写查询</span></div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-box">MCP<span class="pipe-box__sub">调用数据库能力</span></div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-box pipe-box--core">Skein<span class="pipe-box__sub">执行查询</span></div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-box">查询结果<span class="pipe-box__sub">返回给 AI</span></div>
 </div>
 
-<div v-click class="mt-4">
-  <div class="c1 font-semibold mb-2">提供结构视图</div>
-  <div class="c2 text-sm leading-relaxed">
-    给 LLM 一个"目录级"的图 schema 视图：labels、关系类型、常见的 1-2 跳路径。<br/>
-    <span class="c3">绝不包含 payload 本体，也绝不包含 embedding 向量。</span>
+<div class="deck-split mt-6">
+  <div v-click>
+    <div class="c1 font-semibold mb-3">通过 MCP 直接查询</div>
+    <div class="c2 text-base leading-relaxed">AI 根据任务编写查询，通过 MCP 查询数据库，再根据结果调整问题、继续探索。</div>
   </div>
-</div>
-
-<div v-click class="mt-3">
-  <div class="c1 font-semibold mb-1">LLM 起草，Skein 校验</div>
-  <div class="c2 text-sm leading-relaxed">
-    LLM 据此起草参数化的、只读的 Cypher。<br/>
-    执行前校验：<span class="pill text-xs">标识符合法性</span> <span class="pill text-xs">跳数上界</span> <span class="pill text-xs">schema 指纹</span><br/>
-    <span class="c3">指纹用于检查 schema 快照是否仍然有效。</span>
+  <div v-click>
+    <div class="c1 font-semibold mb-3">通过 branch 支持独立探索</div>
+    <div class="c2 text-base leading-relaxed">为不同 AI 任务提供独立分支，让每个任务在自己的数据环境中探索。</div>
   </div>
-</div>
-</div>
-
-<div v-click class="flex items-center">
-<div class="pipe-row" style="flex-direction: column; align-items: stretch; gap: 0.5rem;">
-  <div class="pipe-box pipe-box--surface">LLM<span class="pipe-box__sub">读 schema 目录</span></div>
-  <div class="pipe-arrow" style="text-align:center;">↓</div>
-  <div class="pipe-box">起草参数化 Cypher</div>
-  <div class="pipe-arrow" style="text-align:center;">↓</div>
-  <div class="pipe-box pipe-box--core">Skein 校验<span class="pipe-box__sub">标识符 · 跳数 · 指纹</span></div>
-  <div class="pipe-arrow" style="text-align:center;">↓</div>
-  <div class="pipe-box">只读执行</div>
-</div>
-</div>
-
 </div>
 
 </div>
 
 <!--
-LLM 获得的是图的结构信息，不是原始内容或向量。它起草参数化的只读 Cypher，执行前仍要校验标识符、跳数和 schema 指纹。
-这条路径限制模型生成查询的范围；数据库的事务、资源和权限边界仍然需要独立遵守。
+这一页讲 AI 原生数据库的使用方式：AI 可以自己写查询，经 MCP 调用数据库，并根据返回结果继续探索。
+branch 用来支持不同 AI 任务独立探索。这里聚焦任务与数据环境的关系，不展开具体分支操作。
 功能路径介绍到这里，接下来讲怎样验证它们。
 
 [Sources]
-- skein/docs/ARCHITECTURE.md（GraphRAG 查询路径）
-- skein/crates/core/src/graph_rag/fingerprint.rs（schema 指纹）
+- 讲者能力与叙事更新（2026-09-05）：AI 通过 MCP 编写并执行查询，支持 branch。
 -->
 
 ---
