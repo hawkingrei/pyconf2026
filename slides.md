@@ -553,6 +553,51 @@ The optimizer turns a shared logical plan into a physical plan, choosing how to 
 
 <div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
 
+# Executor workflow
+
+<div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">
+The executor follows the physical plan: each operator reads data, performs one operation, and passes its output downstream.
+</div>
+
+<div class="mt-5 c3 text-sm">Example: a query that filters rows and selects columns</div>
+
+<div class="pipe-row mt-3" aria-label="Example data flow: scan, filter, project, results">
+  <div class="pipe-box">Scan<span class="pipe-box__sub">Read source data</span></div>
+  <div class="pipe-arrow" aria-hidden="true">→</div>
+  <div class="pipe-box pipe-box--core">Filter<span class="pipe-box__sub">Keep matching rows</span></div>
+  <div class="pipe-arrow" aria-hidden="true">→</div>
+  <div class="pipe-box pipe-box--core">Project<span class="pipe-box__sub">Select output columns</span></div>
+  <div class="pipe-arrow" aria-hidden="true">→</div>
+  <div class="pipe-box">Results<span class="pipe-box__sub">Return to the caller</span></div>
+</div>
+
+<div class="mt-6 c2 text-sm leading-relaxed space-y-3">
+  <div v-click><strong class="c1">Connected operators:</strong> the physical plan determines which operations run and how they connect.</div>
+  <div v-click><strong class="c1">Batch flow:</strong> streaming operators process bounded batches and pass them to the next operator.</div>
+  <div v-click><strong class="c1">Blocking work:</strong> sorting and aggregation accumulate state before producing results, under memory limits.</div>
+</div>
+
+</div>
+
+<!--
+- The optimizer has chosen a physical plan. The executor now carries out its operations.
+- In this example, a scan reads data, a filter keeps matching rows, and a projection selects the output columns.
+- Streaming operators pass bounded batches downstream. A stop signal can end that flow when the consumer has enough results.
+- Sorting and aggregation need intermediate state before they can produce their results. This breaks the streaming flow and requires memory management.
+
+[Sources]
+- skein/src/executor/batch.rs (physical-plan dispatch, filtering, projection)
+- skein/crates/executor/src/pipeline.rs (batch emission and stop propagation)
+- skein/crates/executor/src/blocking.rs (blocking execution context)
+- skein/docs/ARCHITECTURE.md (execution memory limits)
+-->
+
+---
+
+<div class="deck-slide-body">
+
+<div class="progress-bar mb-2"><span>01</span><span class="dot">·</span><span class="active">02 What</span><span class="dot">·</span><span>03</span><span class="dot">·</span><span>04</span><span class="dot">·</span><span>05</span></div>
+
 # 架构地图
 
 <div class="deck-challenge-lede c2 text-sm leading-relaxed mt-3">

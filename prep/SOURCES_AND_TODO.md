@@ -94,6 +94,18 @@ guide plan selection; the slide makes no optimal-runtime guarantee.
 Source references remain in the speaker notes: `skein/docs/ARCHITECTURE.md`
 and `skein/crates/optimizer/src/{stage,relational_join,relational}.rs`.
 
+### Executor workflow slide added (2026-09-05)
+
+The executor overview follows the optimizer slide. A scan → filter → project
+→ results example explains connected operators and bounded batch flow.
+Sorting and aggregation illustrate why some operators accumulate state
+before producing results and need memory limits.
+
+Verified against `skein/src/executor/batch.rs`,
+`skein/crates/executor/src/{pipeline,blocking}.rs`, and the execution-memory
+section of `skein/docs/ARCHITECTURE.md`. The slide describes data flow without
+claiming that every operator streams or uses a columnar execution path.
+
 ### CRDT / multi-device sync slides removed (2026-09-05)
 
 The user pushed to reframe the CRDT replication slide from "design-stage" to
